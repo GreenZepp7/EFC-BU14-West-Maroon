@@ -1,5 +1,5 @@
 import ICAL from 'ical.js'
-import { TEAM_NAME } from './team'
+import { mentionsTeam } from './team'
 
 export type CalendarEvent = {
   id: string
@@ -23,7 +23,7 @@ export function parseCalendar(source: string): CalendarEvent[] {
       const start = event.startDate.toJSDate()
       const end = event.endDate?.toJSDate() ?? new Date(start.getTime() + 60 * 60 * 1000)
       const description = String(component.getFirstPropertyValue('description') ?? '')
-      if (!description.replace(/\s+/g, ' ').toLowerCase().includes(TEAM_NAME.toLowerCase())) return []
+      if (!mentionsTeam(description)) return []
       const descriptionLines = description.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
       const versusIndex = descriptionLines.findIndex((line) => /^vs\.?$/i.test(line))
       const matchup = versusIndex > 0 && descriptionLines[versusIndex + 1]
@@ -76,7 +76,7 @@ export function parseScheduleHtml(source: string): CalendarEvent[] {
       const listedMatch = cells[matchIndex] ?? ''
       const title = home && away
         ? `${home} vs ${away}`
-        : listedMatch || cells.find((cell) => /\b(?:vs\.?|v\.?|at)\b/i.test(cell)) || (away ? `Eastside F.C. vs ${away}` : '')
+        : listedMatch || cells.find((cell) => /\b(?:vs\.?|v\.?|at)\b/i.test(cell)) || (away ? `Eastside FC vs ${away}` : '')
       if (!title) continue
 
       const location = cells[locationIndex] ?? ''

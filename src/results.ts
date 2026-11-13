@@ -1,4 +1,4 @@
-import { TEAM_NAME } from './team'
+import { isTeamName, TEAM_NAME } from './team'
 
 export type Standing = {
   rank: number
@@ -85,7 +85,7 @@ export function parseResultsHtml(source: string): ResultsSnapshot {
     }]
   })
 
-  if (!standings.some((standing) => standing.team === TEAM_NAME)) {
+  if (!standings.some((standing) => isTeamName(standing.team))) {
     throw new Error(`The standings table did not include ${TEAM_NAME}.`)
   }
 
@@ -115,7 +115,7 @@ export function parseResultsHtml(source: string): ResultsSnapshot {
       const homeScore = numberAt(cells, scoreIndices[0] ?? -1)
       const awayScore = numberAt(cells, scoreIndices[1] ?? -1)
       if (!gameId || !/^\d+$/.test(gameId)) continue
-      if (home !== TEAM_NAME && away !== TEAM_NAME) continue
+      if (!isTeamName(home) && !isTeamName(away)) continue
       gamesById.set(gameId, {
         gameId,
         home,

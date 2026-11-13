@@ -1,4 +1,4 @@
-# Eastside F.C. BU14 West Maroon Dashboard
+# Eastside FC BU14 West Maroon Dashboard
 
 A 2026/27 Regional Club League dashboard with live fixtures from SportsAffinity and imported results, standings, and season statistics.
 

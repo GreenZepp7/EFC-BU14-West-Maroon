@@ -11,7 +11,7 @@ import {
 import { parseCalendar, type CalendarEvent } from './calendar'
 import { parseResultsHtml, type ResultsSnapshot, type Standing, type TeamFixture } from './results'
 import { seasonSnapshot } from './seasonSnapshot'
-import { TEAM_NAME } from './team'
+import { isTeamName, TEAM_NAME } from './team'
 
 const calendarApiUrl = '/api/calendar'
 const teamUrl = 'https://wys.sportsaffinity.com/tour/public/info/schedule_results2.asp?sessionguid=&flightguid=C48FB252-3C45-4D73-A503-AE7FB8808B8D&tournamentguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B'
@@ -238,7 +238,7 @@ function App() {
     return () => { active = false }
   }, [])
 
-  const teamStanding = snapshot.standings.find((standing) => standing.team === TEAM_NAME)
+  const teamStanding = snapshot.standings.find((standing) => isTeamName(standing.team))
   const matches = useMemo(() => {
     const fixturesById = new Map(snapshot.games.map((fixture) => [fixture.gameId, fixture]))
     return events.flatMap((event) => {
@@ -251,7 +251,8 @@ function App() {
 
       const hasScore = fixture?.homeScore !== null && fixture?.homeScore !== undefined &&
         fixture?.awayScore !== null && fixture?.awayScore !== undefined
-      const isHome = home === TEAM_NAME
+      const isHome = isTeamName(home)
+      const opponent = isHome ? away : home
       const goalsFor = hasScore ? (isHome ? fixture.homeScore : fixture.awayScore) : null
       const goalsAgainst = hasScore ? (isHome ? fixture.awayScore : fixture.homeScore) : null
       const outcome: MatchView['outcome'] = goalsFor === null || goalsAgainst === null
@@ -270,8 +271,10 @@ function App() {
           field: '',
         },
         event,
-        opponent: isHome ? away : home,
-        opponentRank: snapshot.standings.find((standing) => standing.team === (isHome ? away : home))?.rank,
+        opponent,
+        opponentRank: snapshot.standings.find((standing) =>
+          isTeamName(opponent) ? isTeamName(standing.team) : standing.team === opponent,
+        )?.rank,
         isHome,
         goalsFor,
         goalsAgainst,
@@ -320,7 +323,7 @@ function App() {
 
   return <div className="dashboard-shell">
     <header className="topbar">
-      <a className="brand" href={teamUrl} target="_blank" rel="noreferrer" aria-label="Eastside F.C. schedule">
+      <a className="brand" href={teamUrl} target="_blank" rel="noreferrer" aria-label="Eastside FC schedule">
         <img className="brand-logo" src="/eastside-fc-wordmark.png" alt="Eastside FC" />
         <span className="brand-label"><small>Season tracker</small></span>
       </a>
@@ -335,7 +338,7 @@ function App() {
       <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow"><span />26/27 REGIONAL CLUB LEAGUE <b>·</b> BOYS UNDER 14 <b>·</b> DIV 2 NORTH</div>
-          <h1>Eastside F.C.<br /><em>BU14 West Maroon</em></h1>
+          <h1>Eastside FC<br /><em>BU14 West Maroon</em></h1>
           <p className="hero-summary">
             {teamStanding ? `${ordinal(teamStanding.rank)}, ${pointsBehind ? `${pointsBehind} point${pointsBehind === 1 ? '' : 's'} behind ${leader?.team}` : 'at the top of the table'}.` : 'Season overview'}
             {' '}{completed.length} played · {upcoming.length} to play
@@ -419,9 +422,9 @@ function App() {
                 const wins = standing.pointsByRound.filter((value) => value === 3).length
                 const draws = standing.pointsByRound.filter((value) => value === 1).length
                 const losses = played - wins - draws
-                return <tr className={standing.team === TEAM_NAME ? 'our-team' : ''} key={standing.team}>
+                return                 <tr className={isTeamName(standing.team) ? 'our-team' : ''} key={standing.team}>
                   <td>{standing.rank}</td>
-                  <td><span className="club-cell"><i>{standing.group}</i>{standing.team}</span></td>
+                  <td><span className="club-cell"><i>{standing.group}</i>{isTeamName(standing.team) ? TEAM_NAME : standing.team}</span></td>
                   <td>{played}</td>
                   <td>{wins}-{draws}-{losses}</td>
                   <td className={standing.goalDifference > 0 ? 'positive' : standing.goalDifference < 0 ? 'negative' : ''}>{standing.goalDifference > 0 ? '+' : ''}{standing.goalDifference}</td>
