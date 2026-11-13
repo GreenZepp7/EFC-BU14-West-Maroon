@@ -56,6 +56,11 @@ h1, h2, p { margin: 0; }
 .next-location svg { flex: 0 0 auto; }
 a.next-location:hover { color: var(--maroon); text-decoration: underline; }
 .next-card > small { color: var(--maroon); font-size: 10px; }
+.next-prediction { margin-top: 6px; padding: 8px 9px 9px; border: 1px solid #f3dfcb; border-radius: 4px; background: #fbf5ee; display: grid; gap: 3px; }
+.prediction-label { color: #8f735c; font-size: 8px; font-weight: 700; letter-spacing: .75px; text-transform: uppercase; }
+.next-prediction > strong { color: #2c3d44; font-size: 12px; line-height: 1.2; }
+.next-prediction > small { color: #6d7b7d; font-size: 10px; font-weight: 700; }
+.next-prediction > em { color: #89715f; font-size: 9px; font-style: normal; line-height: 1.35; }
 
 .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); }
 .metric-card { min-height: 99px; padding: 16px 19px 14px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; background: var(--paper); }

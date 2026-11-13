@@ -109,6 +109,39 @@ function pointsForStanding(standing: Standing, roundCount = standing.pointsByRou
   return values
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function predictNextFixture(nextFixture: MatchView | undefined, completed: MatchView[]) {
+  if (!nextFixture || !completed.length) return null
+
+  const recent = completed.slice(-5)
+  const recentStats = summarize(recent)
+  const recentPointsPerGame = recentStats.games ? recentStats.points / recentStats.games : 0
+  const recentGoalDifference = recentStats.games ? (recentStats.goalsFor - recentStats.goalsAgainst) / recentStats.games : 0
+  const opponentAdjustment = nextFixture.opponentRank ? clamp((11 - nextFixture.opponentRank) * 0.03, -0.14, 0.18) : 0.04
+  const homeAdjustment = nextFixture.isHome ? 0.1 : -0.04
+  const winChance = clamp(0.38 + (recentPointsPerGame / 3) * 0.42 + recentGoalDifference * 0.08 + homeAdjustment + opponentAdjustment, 0.2, 0.8)
+  const drawChance = clamp(0.26 + (3 - recentPointsPerGame) * 0.08 - Math.abs(recentGoalDifference) * 0.05, 0.12, 0.35)
+  const lossChance = clamp(1 - winChance - drawChance, 0.1, 0.5)
+
+  let outcome: MatchView['outcome']
+  if (winChance >= drawChance && winChance >= lossChance) outcome = 'W'
+  else if (drawChance >= lossChance) outcome = 'D'
+  else outcome = 'L'
+
+  const confidence = Math.round(Math.max(winChance, drawChance, lossChance) * 100)
+  const summary = outcome === 'W' ? 'Likely win' : outcome === 'D' ? 'Likely draw' : 'Likely loss'
+  const note = outcome === 'W'
+    ? 'Recent form and home edge suggest the next result is in our favour.'
+    : outcome === 'D'
+      ? 'A tight contest is the most likely outcome based on the recent run.'
+      : 'Opposition strength and recent defending point to a tougher test.'
+
+  return { outcome, summary, confidence, note }
+}
+
 function makePointSeries(standings: Standing[], teamStanding?: Standing): PointSeries[] {
   if (!teamStanding || !standings.length) return []
   const rounds = Math.max(...standings.map((standing) => standing.pointsByRound.length))
@@ -262,6 +295,7 @@ function App() {
   const pointsBehind = leader && teamStanding ? Math.max(0, leader.points - teamStanding.points) : 0
   const chartSeries = makePointSeries(snapshot.standings, teamStanding)
   const nextFixture = upcoming[0]
+  const nextPrediction = useMemo(() => predictNextFixture(nextFixture, completed), [nextFixture, completed])
   const nextLocation = nextFixture ? venueLocation(nextFixture.fixture, nextFixture.event) : ''
   const splits = [
     { name: 'Overall', matches: completed },
@@ -322,6 +356,12 @@ function App() {
               <span className="next-location"><MapPin size={12} /><span>{venueLabel(nextFixture.fixture, nextFixture.event)}</span></span>
             )}
             <small>{nextFixture.opponentRank ? `${ordinal(nextFixture.opponentRank)} in the division` : 'League fixture'}</small>
+            {nextPrediction ? <div className="next-prediction">
+              <span className="prediction-label">Prediction</span>
+              <strong>{nextPrediction.summary}</strong>
+              <small>{nextPrediction.confidence}% chance</small>
+              <em>{nextPrediction.note}</em>
+            </div> : null}
           </> : <strong>{status === 'loading' ? 'Loading schedule…' : 'No upcoming fixtures found'}</strong>}
         </aside>
       </section>
