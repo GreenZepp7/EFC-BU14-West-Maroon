@@ -13,7 +13,7 @@ import { parseResultsHtml, type ResultsSnapshot, type Standing, type TeamFixture
 import { seasonSnapshot } from './seasonSnapshot'
 import { TEAM_NAME } from './team'
 
-const calendarApiUrl = '/api/calendar.ics'
+const calendarApiUrl = '/api/calendar'
 const teamUrl = 'https://wys.sportsaffinity.com/tour/public/info/schedule_results2.asp?sessionguid=&flightguid=C48FB252-3C45-4D73-A503-AE7FB8808B8D&tournamentguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B'
 const timezone = 'America/Los_Angeles'
 
