@@ -37,7 +37,7 @@ a { color: inherit; text-decoration: none; }
 .update-button { height: 34px; display: inline-flex; align-items: center; gap: 7px; padding: 0 12px; border: 0; border-radius: 4px; background: var(--maroon); color: #fff; cursor: pointer; font-size: 10px; font-weight: 700; }
 .update-button:hover { background: var(--maroon-deep); }
 .dashboard { width: min(1360px, calc(100% - 56px)); margin: 0 auto; padding: 0 0 30px; }
-.hero { min-height: 218px; padding: 38px 2px 29px; display: flex; justify-content: space-between; align-items: flex-end; gap: 30px; }
+.hero { min-height: 0; padding: 26px 2px 22px; display: flex; justify-content: space-between; align-items: flex-start; gap: 30px; }
 .hero-copy { min-width: 0; }
 .eyebrow { display: flex; align-items: center; gap: 8px; color: #7d8b8d; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
 .eyebrow > span { width: 18px; height: 2px; background: var(--gold); }
