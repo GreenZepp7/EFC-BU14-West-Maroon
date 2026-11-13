@@ -58,9 +58,19 @@ function timeLabel(fixture: TeamFixture, event?: CalendarEvent) {
   return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(event.start)
 }
 
-function venueLabel(fixture: TeamFixture) {
-  if (!fixture.venue || /virtual tbd/i.test(fixture.venue)) return 'Venue TBD'
-  return fixture.field && fixture.field !== '--' ? `${fixture.venue} · Field ${fixture.field}` : fixture.venue
+function venueLocation(fixture: TeamFixture, event?: CalendarEvent) {
+  const locations = [fixture.venue.trim(), event?.location.trim() ?? '']
+  return locations.find((location) => location && !/virtual tbd|^tbd$|^--$/i.test(location)) ?? ''
+}
+
+function venueLabel(fixture: TeamFixture, event?: CalendarEvent) {
+  const venue = venueLocation(fixture, event)
+  if (!venue) return 'Venue TBD'
+  return fixture.field && fixture.field !== '--' ? `${venue} · Field ${fixture.field}` : venue
+}
+
+function googleMapsUrl(location: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
 }
 
 function ordinal(value: number) {
@@ -251,6 +261,8 @@ function App() {
   const leader = snapshot.standings[0]
   const pointsBehind = leader && teamStanding ? Math.max(0, leader.points - teamStanding.points) : 0
   const chartSeries = makePointSeries(snapshot.standings, teamStanding)
+  const nextFixture = upcoming[0]
+  const nextLocation = nextFixture ? venueLocation(nextFixture.fixture, nextFixture.event) : ''
   const splits = [
     { name: 'Overall', matches: completed },
     { name: 'Home', matches: completed.filter((match) => match.isHome) },
@@ -297,10 +309,19 @@ function App() {
         </div>
         <aside className="next-card">
           <span className="next-kicker"><i />NEXT FIXTURE</span>
-          {upcoming[0] ? <>
-            <strong>{upcoming[0].opponent}</strong>
-            <span>{dateLabel(upcoming[0].event?.start)} · {timeLabel(upcoming[0].fixture, upcoming[0].event)}</span>
-            <small>{upcoming[0].opponentRank ? `${ordinal(upcoming[0].opponentRank)} in the division` : 'League fixture'}</small>
+          {nextFixture ? <>
+            <strong>{nextFixture.opponent}</strong>
+            <span>{dateLabel(nextFixture.event?.start)} · {timeLabel(nextFixture.fixture, nextFixture.event)}</span>
+            {nextLocation ? (
+              <a className="next-location" href={googleMapsUrl(nextLocation)} target="_blank" rel="noreferrer">
+                <MapPin size={12} />
+                <span>{venueLabel(nextFixture.fixture, nextFixture.event)}</span>
+                <ExternalLink size={11} />
+              </a>
+            ) : (
+              <span className="next-location"><MapPin size={12} /><span>{venueLabel(nextFixture.fixture, nextFixture.event)}</span></span>
+            )}
+            <small>{nextFixture.opponentRank ? `${ordinal(nextFixture.opponentRank)} in the division` : 'League fixture'}</small>
           </> : <strong>{status === 'loading' ? 'Loading schedule…' : 'No upcoming fixtures found'}</strong>}
         </aside>
       </section>
@@ -328,7 +349,7 @@ function App() {
           {resultsWithRunningPoints.length ? resultsWithRunningPoints.slice().reverse().map((match) => <article className="result-row" key={match.fixture.gameId}>
             <div className="result-date"><strong>{dateLabel(match.event?.start, { day: '2-digit' })}</strong><span>{dateLabel(match.event?.start, { month: 'short' }).toUpperCase()}</span></div>
             <span className={`home-away ${match.isHome ? 'home' : 'away'}`}>{match.isHome ? 'H' : 'A'}</span>
-            <div className="result-opponent"><strong>{match.opponent}</strong><small>{venueLabel(match.fixture)}</small></div>
+            <div className="result-opponent"><strong>{match.opponent}</strong><small>{venueLabel(match.fixture, match.event)}</small></div>
             <span className={`result-outcome ${match.outcome?.toLowerCase()}`}>{match.outcome}</span>
             <strong className="result-score">{match.fixture.homeScore} – {match.fixture.awayScore}</strong>
             <span className="running-points"><b>{match.runningPoints}</b><small>PTS</small></span>
@@ -381,7 +402,7 @@ function App() {
             {upcoming.length ? upcoming.map((match) => <article className="fixture-row" key={match.fixture.gameId}>
               <div className="fixture-date"><strong>{dateLabel(match.event?.start, { day: '2-digit' })}</strong><span>{dateLabel(match.event?.start, { month: 'short' }).toUpperCase()}</span></div>
               <span className={`home-away ${match.isHome ? 'home' : 'away'}`}>{match.isHome ? 'H' : 'A'}</span>
-              <div className="fixture-details"><strong>{match.opponent}</strong><span><Clock3 size={12} />{timeLabel(match.fixture, match.event)}<MapPin size={12} />{venueLabel(match.fixture)}</span></div>
+              <div className="fixture-details"><strong>{match.opponent}</strong><span><Clock3 size={12} />{timeLabel(match.fixture, match.event)}<MapPin size={12} />{venueLabel(match.fixture, match.event)}</span></div>
               <span className="opponent-rank">{match.opponentRank ? `#${match.opponentRank}` : '—'}</span>
             </article>) : <div className="empty-row">No upcoming fixtures.</div>}
           </div>

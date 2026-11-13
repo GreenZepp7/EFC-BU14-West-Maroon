@@ -51,6 +51,10 @@ h1, h2, p { margin: 0; }
 .next-kicker i { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 3px #f4e9dc; }
 .next-card > strong { overflow: hidden; color: #29383e; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .next-card > span:not(.next-kicker) { color: #718083; font-size: 11px; }
+.next-location { width: fit-content; max-width: 100%; display: inline-flex; align-items: center; gap: 5px; color: #718083; font-size: 11px; }
+.next-location span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.next-location svg { flex: 0 0 auto; }
+a.next-location:hover { color: var(--maroon); text-decoration: underline; }
 .next-card > small { color: var(--maroon); font-size: 10px; }
 
 .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); }
