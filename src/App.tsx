@@ -8,6 +8,7 @@ import {
   Trophy,
   Upload,
 } from 'lucide-react'
+import { Analytics } from '@vercel/analytics/react'
 import { parseCalendar, type CalendarEvent } from './calendar'
 import { parseResultsHtml, type ResultsSnapshot, type Standing, type TeamFixture } from './results'
 import { seasonSnapshot } from './seasonSnapshot'
@@ -480,6 +481,7 @@ function App() {
         <button onClick={() => inputRef.current?.click()}><CalendarDays size={13} />Replace results export</button>
       </footer>
     </main>
+    <Analytics />
   </div>
 }
 
