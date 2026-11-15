@@ -15,8 +15,16 @@ import { seasonSnapshot } from './seasonSnapshot'
 import { isTeamName, TEAM_NAME } from './team'
 
 const calendarApiUrl = '/api/calendar'
-const teamUrl = 'https://wys.sportsaffinity.com/tour/public/info/schedule_results2.asp?sessionguid=&flightguid=C48FB252-3C45-4D73-A503-AE7FB8808B8D&tournamentguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B'
+const teamUrl = 'https://wys.sportsaffinity.com/tour/public/info/schedule_results2.asp?sessionguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B&tournamentguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B&flightguid=C48FB252-3C45-4D73-A503-AE7FB8808B8D&tourappguid=A759FCAA-1F75-42A9-A082-66F5AE8D874F'
 const timezone = 'America/Los_Angeles'
+
+function officialTeamUrl(team: string, group: string) {
+  const url = new URL(teamUrl)
+  url.searchParams.set('teamname', team)
+  url.searchParams.set('teamcode', '--')
+  url.searchParams.set('groupcode', group.charAt(0))
+  return url.href
+}
 
 type MatchView = {
   fixture: TeamFixture
@@ -446,7 +454,7 @@ function App() {
             {upcoming.length ? upcoming.map((match) => <article className="fixture-row" key={match.fixture.gameId}>
               <div className="fixture-date"><strong>{dateLabel(match.event?.start, { day: '2-digit' })}</strong><span>{dateLabel(match.event?.start, { month: 'short' }).toUpperCase()}</span></div>
               <span className={`home-away ${match.isHome ? 'home' : 'away'}`}>{match.isHome ? 'H' : 'A'}</span>
-              <div className="fixture-details"><strong>{match.opponent}</strong><span><Clock3 size={12} />{timeLabel(match.fixture, match.event)}<MapPin size={12} />{venueLabel(match.fixture, match.event)}</span></div>
+              <div className="fixture-details"><strong><a className="fixture-team-link" href={officialTeamUrl(match.opponent, snapshot.standings.find((standing) => standing.team === match.opponent)?.group ?? '')} target="_blank" rel="noreferrer">{match.opponent}</a></strong><span><Clock3 size={12} />{timeLabel(match.fixture, match.event)}<MapPin size={12} />{venueLabel(match.fixture, match.event)}</span></div>
               <span className="opponent-rank">{match.opponentRank ? `#${match.opponentRank}` : '—'}</span>
             </article>) : <div className="empty-row">No upcoming fixtures.</div>}
           </div>
