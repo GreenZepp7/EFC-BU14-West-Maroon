@@ -145,6 +145,64 @@ a.next-location:hover { color: var(--maroon); text-decoration: underline; }
 .dashboard-footer button { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; color: var(--maroon); cursor: pointer; font-size: 9px; font-weight: 700; }
 .notice { margin: 0 0 13px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 15px; border: 1px solid #ead8c7; border-radius: 3px; background: #fbf3e8; color: #795b3f; font-size: 10px; }
 .notice a { display: inline-flex; align-items: center; gap: 4px; color: #63452e; font-weight: 700; white-space: nowrap; }
+.practice-calendar-page { width: min(1120px, calc(100% - 56px)); margin: 0 auto; padding: 30px 0 40px; }
+.practice-calendar-title { margin: 0 2px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.practice-calendar-title h1 { margin-top: 12px; color: var(--ink); font: 800 clamp(32px, 5vw, 46px)/1 'Manrope', sans-serif; letter-spacing: -1.8px; }
+.practice-calendar-title p { margin-top: 10px; color: #6d7a7e; font-size: 12px; }
+.practice-calendar-title > svg { color: var(--maroon); }
+.practice-calendar-panel, .practice-day-panel { margin-top: 17px; }
+.practice-calendar-toolbar { margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.practice-month-navigation { display: flex; align-items: center; gap: 12px; }
+.practice-month-navigation h2 { min-width: 180px; color: #29373d; font: 700 18px/1.2 'Manrope', sans-serif; text-align: center; }
+.practice-month-navigation button, .practice-today-button { min-width: 32px; height: 32px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: #536368; cursor: pointer; }
+.practice-month-navigation button:hover, .practice-today-button:hover { border-color: #c8d1cc; color: var(--maroon); }
+.practice-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); }
+.practice-weekday { min-height: 31px; padding: 9px 7px; background: #f8f9f7; color: #859192; font-size: 9px; font-weight: 700; text-align: center; }
+.practice-day { min-width: 0; min-height: 106px; padding: 7px; display: flex; flex-direction: column; align-items: stretch; gap: 5px; background: #fff; color: #35434a; }
+.practice-day:hover { background: #fbf8f6; }
+.practice-day.selected { box-shadow: inset 0 0 0 2px var(--maroon); }
+.practice-day.outside-month { background: #f8f9f7; color: #a4aeac; }
+.practice-day.next-practice-day { background: #fbf5ee; }
+.practice-day-select { width: 100%; padding: 0; display: flex; justify-content: flex-start; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
+.practice-day-select:focus-visible, .practice-day-event:focus-visible, .practice-day-more:focus-visible { outline: 2px solid var(--maroon); outline-offset: 1px; }
+.practice-day-number { width: 23px; height: 23px; display: grid; place-items: center; border-radius: 50%; font-size: 10px; font-weight: 600; }
+.practice-day.today .practice-day-number { background: var(--maroon); color: #fff; }
+.practice-day-events { min-width: 0; display: grid; gap: 3px; }
+.practice-day-event { width: 100%; overflow: hidden; padding: 3px 4px; border: 0; border-radius: 2px; background: #f5edef; color: #623846; cursor: pointer; font-size: 8px; line-height: 1.3; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.practice-day-event:hover { background: #efdee3; }
+.practice-day-event.next-practice-event { background: var(--maroon); color: #fff; }
+.practice-day-event time { font-weight: 700; }
+.practice-day-more { width: fit-content; padding: 0; border: 0; background: transparent; color: #829092; cursor: pointer; font-size: 8px; }
+.practice-next-badge { width: fit-content; padding: 2px 5px; border-radius: 2px; background: #f3e3ca; color: #815d32; font-size: 8px; font-weight: 700; letter-spacing: .35px; text-transform: uppercase; }
+.practice-day-event .practice-next-badge { margin-right: 4px; background: #fff; color: var(--maroon); }
+.practice-calendar-message { padding: 13px 2px; color: #849194; font-size: 11px; }
+.practice-event-list { border-top: 1px solid #edf0ed; }
+.practice-event { width: 100%; min-height: 60px; padding: 12px 4px; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 15px; border: 0; border-bottom: 1px solid #edf0ed; background: #fff; color: inherit; cursor: pointer; font: inherit; text-align: left; }
+.practice-event:last-child { border-bottom: 0; }
+.practice-event:hover { background: #fbf8f6; }
+.practice-event.next-practice-event { border-left: 3px solid var(--gold); background: #fbf5ee; }
+.practice-event:focus-visible { outline: 2px solid var(--maroon); outline-offset: -2px; }
+.practice-event-time, .practice-event-description > span { display: flex; align-items: flex-start; gap: 6px; color: #7d8a8c; font-size: 10px; }
+.practice-event-time { padding-top: 2px; font-weight: 600; }
+.practice-event-time svg, .practice-event-description > span svg { flex: 0 0 auto; }
+.practice-event-description { display: grid; gap: 7px; }
+.practice-event-description strong { color: #35434a; font-size: 11px; }
+.practice-event-description > span { line-height: 1.4; }
+.practice-event-description > .practice-next-badge { line-height: 1.2; }
+.practice-event-dialog { width: min(540px, calc(100% - 32px)); max-height: min(82vh, 720px); padding: 0; overflow: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); box-shadow: 0 18px 60px rgb(22 34 39 / 24%); }
+.practice-event-dialog::backdrop { background: rgb(24 35 40 / 48%); backdrop-filter: blur(2px); }
+.practice-event-modal { padding: 22px; }
+.practice-event-modal-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.practice-event-modal-heading > div > span { color: #879394; font-size: 9px; font-weight: 700; letter-spacing: .8px; }
+.practice-event-modal-heading h2 { margin-top: 7px; color: #29373d; font: 700 20px/1.3 'Manrope', sans-serif; }
+.practice-event-close { width: 32px; height: 32px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: #738184; cursor: pointer; }
+.practice-event-close:hover { color: var(--maroon); border-color: #d7bec5; }
+.practice-event-modal-details { margin-top: 20px; padding: 15px 0; display: grid; gap: 13px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.practice-event-modal-details > div { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: start; gap: 8px; color: #627175; font-size: 12px; line-height: 1.45; }
+.practice-event-modal-details svg { color: #879394; }
+.practice-event-modal-location a { color: var(--maroon); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.practice-event-modal-location a:hover, .practice-event-modal-location a:focus-visible { color: var(--maroon-deep); }
+.practice-event-modal-description { margin-top: 15px; color: #627175; font-size: 11px; line-height: 1.6; white-space: pre-line; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 @media (max-width: 980px) {
@@ -162,6 +220,33 @@ a.next-location:hover { color: var(--maroon); text-decoration: underline; }
   .source-link svg { width: 17px; height: 17px; }
   .update-button { height: 32px; padding: 0 9px; font-size: 9px; }
   .dashboard { width: calc(100% - 24px); padding-bottom: 18px; }
+  .practice-calendar-page { width: calc(100% - 24px); padding: 23px 0 28px; }
+  .practice-calendar-title { margin: 0 1px 17px; }
+  .practice-calendar-title h1 { font-size: 34px; letter-spacing: -1.4px; }
+  .practice-calendar-title p { font-size: 10px; }
+  .practice-calendar-title > svg { width: 20px; }
+  .practice-calendar-panel { padding: 12px 8px; }
+  .practice-calendar-toolbar { margin-bottom: 10px; }
+  .practice-month-navigation { gap: 6px; }
+  .practice-month-navigation h2 { min-width: 142px; font-size: 15px; }
+  .practice-month-navigation button, .practice-today-button { min-width: 28px; height: 29px; padding: 0 6px; font-size: 9px; }
+  .practice-weekday { min-height: 27px; padding: 8px 2px; font-size: 8px; }
+  .practice-day { min-height: 54px; padding: 4px 2px; align-items: center; gap: 3px; }
+  .practice-day-select { justify-content: center; }
+  .practice-day-number { width: 21px; height: 21px; font-size: 9px; }
+  .practice-day-events { display: flex; min-height: 5px; justify-content: center; gap: 2px; }
+  .practice-day-event { width: 20px; height: 18px; padding: 0; display: grid; place-items: center; border-radius: 0; background: transparent; font-size: 0; }
+  .practice-day-event::before { width: 5px; height: 5px; border-radius: 50%; background: var(--maroon); content: ''; }
+  .practice-day-event:hover { background: transparent; }
+  .practice-day-event.next-practice-event::before { width: 7px; height: 7px; background: var(--gold); box-shadow: 0 0 0 2px #f4e9dc; }
+  .practice-day-event time, .practice-day-more { display: none; }
+  .practice-day-panel { padding: 14px 12px; }
+  .practice-event { grid-template-columns: 84px minmax(0, 1fr); gap: 8px; }
+  .practice-event-time { font-size: 9px; }
+  .practice-event-description strong { font-size: 10px; }
+  .practice-event-description > span { font-size: 9px; }
+  .practice-event-modal { padding: 17px; }
+  .practice-event-modal-heading h2 { font-size: 17px; }
   .hero { min-height: auto; padding: 29px 1px 21px; display: block; }
   .eyebrow { flex-wrap: wrap; gap: 6px; font-size: 7px; letter-spacing: .65px; }
   .hero h1 { margin-top: 10px; font-size: 38px; letter-spacing: -1.7px; }

@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { getCalendar } from './calendarFeed.mjs'
+import { getPracticeCalendar } from './practiceCalendarFeed.mjs'
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
@@ -63,14 +64,15 @@ async function serveStatic(pathname, response) {
 const server = createServer(async (request, response) => {
   const requestUrl = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`)
 
-  if (requestUrl.pathname === '/api/calendar' || requestUrl.pathname === '/api/calendar.ics') {
+  const isPracticeCalendar = requestUrl.pathname === '/api/practice-calendar'
+  if (requestUrl.pathname === '/api/calendar' || requestUrl.pathname === '/api/calendar.ics' || isPracticeCalendar) {
     if (request.method !== 'GET') {
       response.writeHead(405, { allow: 'GET' }).end('Method not allowed')
       return
     }
 
     try {
-      const calendar = await getCalendar()
+      const calendar = isPracticeCalendar ? await getPracticeCalendar() : await getCalendar()
       response.writeHead(200, {
         'content-type': 'text/calendar; charset=utf-8',
         'cache-control': 'private, no-store',
@@ -78,8 +80,10 @@ const server = createServer(async (request, response) => {
       response.end(calendar)
     } catch (error) {
       sendJson(response, 502, {
-        error: 'Calendar feed unavailable',
-        detail: error instanceof Error ? error.message : 'The calendar request failed.',
+        error: isPracticeCalendar ? 'Practice calendar unavailable' : 'Calendar feed unavailable',
+        detail: error instanceof Error
+          ? error.message
+          : isPracticeCalendar ? 'The practice calendar request failed.' : 'The calendar request failed.',
       })
     }
     return

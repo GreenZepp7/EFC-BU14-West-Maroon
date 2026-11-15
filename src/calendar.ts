@@ -11,7 +11,7 @@ export type CalendarEvent = {
   url: string
 }
 
-export function parseCalendar(source: string): CalendarEvent[] {
+export function parseCalendar(source: string, { teamOnly = true }: { teamOnly?: boolean } = {}): CalendarEvent[] {
   const parsed = ICAL.parse(source)
   const calendar = new ICAL.Component(parsed)
 
@@ -23,7 +23,7 @@ export function parseCalendar(source: string): CalendarEvent[] {
       const start = event.startDate.toJSDate()
       const end = event.endDate?.toJSDate() ?? new Date(start.getTime() + 60 * 60 * 1000)
       const description = String(component.getFirstPropertyValue('description') ?? '')
-      if (!mentionsTeam(description)) return []
+      if (teamOnly && !mentionsTeam(description)) return []
       const descriptionLines = description.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
       const versusIndex = descriptionLines.findIndex((line) => /^vs\.?$/i.test(line))
       const matchup = versusIndex > 0 && descriptionLines[versusIndex + 1]

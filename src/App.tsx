@@ -11,11 +11,13 @@ import {
 import { Analytics } from '@vercel/analytics/react'
 import { parseCalendar, type CalendarEvent } from './calendar'
 import { parseResultsHtml, type ResultsSnapshot, type Standing, type TeamFixture } from './results'
+import PracticeCalendar from './PracticeCalendar'
 import { seasonSnapshot } from './seasonSnapshot'
 import { isTeamName, TEAM_NAME } from './team'
 
 const calendarApiUrl = '/api/calendar'
 const teamUrl = 'https://wys.sportsaffinity.com/tour/public/info/schedule_results2.asp?sessionguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B&tournamentguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B&flightguid=C48FB252-3C45-4D73-A503-AE7FB8808B8D&tourappguid=A759FCAA-1F75-42A9-A082-66F5AE8D874F'
+const practiceCalendarViewUrl = '/?view=practice'
 const timezone = 'America/Los_Angeles'
 
 function officialTeamUrl(team: string, group: string) {
@@ -211,7 +213,7 @@ function PointsChart({ series }: { series: PointSeries[] }) {
   </>
 }
 
-function App() {
+function Dashboard() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [snapshot, setSnapshot] = useState<ResultsSnapshot>(seasonSnapshot)
   const [feedMessage, setFeedMessage] = useState('')
@@ -338,6 +340,7 @@ function App() {
       </a>
       <div className="topbar-actions">
         <a className="source-link" href={teamUrl} target="_blank" rel="noreferrer">Official schedule <ExternalLink size={14} /></a>
+        <a className="source-link" href={practiceCalendarViewUrl} target="_blank" rel="noreferrer" aria-label="Open practice schedule calendar">Practice schedule <CalendarDays size={14} /></a>
         <button className="update-button" onClick={() => inputRef.current?.click()}><Upload size={15} />Update stats</button>
         <input ref={inputRef} className="visually-hidden" type="file" accept=".html,.htm,.aspx,text/html" onChange={(event) => void importResults(event.target.files?.[0])} />
       </div>
@@ -489,8 +492,15 @@ function App() {
         <button onClick={() => inputRef.current?.click()}><CalendarDays size={13} />Replace results export</button>
       </footer>
     </main>
-    <Analytics />
   </div>
+}
+
+function App() {
+    const isPracticeCalendar = new URLSearchParams(window.location.search).get('view') === 'practice'
+    return <>
+      {isPracticeCalendar ? <PracticeCalendar /> : <Dashboard />}
+      <Analytics />
+    </>
 }
 
 export default App
