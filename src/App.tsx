@@ -213,6 +213,28 @@ function PointsChart({ series }: { series: PointSeries[] }) {
   </>
 }
 
+function DashboardSkeleton() {
+  return <section className="dashboard-skeleton" role="status" aria-label="Loading season dashboard">
+    <div className="skeleton-hero">
+      <div className="skeleton-hero-copy">
+        <span className="skeleton-block skeleton-eyebrow" />
+        <span className="skeleton-block skeleton-title" />
+        <span className="skeleton-block skeleton-summary" />
+      </div>
+      <div className="skeleton-block skeleton-next-card" />
+    </div>
+    <div className="skeleton-metrics">
+      {Array.from({ length: 8 }, (_, index) => <div className="skeleton-block skeleton-metric" key={index} />)}
+    </div>
+    <div className="skeleton-block skeleton-panel skeleton-results" />
+    <div className="skeleton-block skeleton-panel skeleton-chart" />
+    <div className="skeleton-lower-grid">
+      <div className="skeleton-block skeleton-panel skeleton-table" />
+      <div className="skeleton-block skeleton-panel skeleton-fixtures" />
+    </div>
+  </section>
+}
+
 function Dashboard() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [snapshot, setSnapshot] = useState<ResultsSnapshot>(seasonSnapshot)
@@ -346,7 +368,8 @@ function Dashboard() {
       </div>
     </header>
 
-    <main className="dashboard">
+    {status === 'loading' && <DashboardSkeleton />}
+    <main className="dashboard" hidden={status === 'loading'}>
       <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow"><span />26/27 REGIONAL CLUB LEAGUE <b>·</b> BOYS UNDER 14 <b>·</b> DIV 2 NORTH</div>
