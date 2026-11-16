@@ -134,6 +134,30 @@ function PracticeCalendar() {
 
       {status === 'error' && <div className="notice error-notice">Practice schedule unavailable: {errorMessage}</div>}
 
+      <section className="panel practice-day-panel" aria-live="polite">
+        <div className="section-heading">
+          <div><h2>{formatLongDate(selectedDate)}</h2><p>{selectedEvents.length ? `${selectedEvents.length} scheduled event${selectedEvents.length === 1 ? '' : 's'}` : 'Team schedule'}</p></div>
+        </div>
+        {selectedEvents.length ? <div className="practice-event-list">
+          {selectedEvents.map((event) => <button
+            className={`practice-event ${event.id === nextPractice?.id ? 'next-practice-event' : ''}`}
+            type="button"
+            key={event.id}
+            onClick={() => setSelectedEvent(event)}
+            aria-label={`View details for ${event.title}`}
+          >
+            <div className="practice-event-time"><Clock3 size={14} /><span>{formatEventTime(event)}</span></div>
+            <div className="practice-event-description">
+              {event.id === nextPractice?.id && <span className="practice-next-badge">Next practice</span>}
+              <strong>{event.title}</strong>
+              {event.location && <span><MapPin size={13} />{event.location}</span>}
+            </div>
+          </button>)}
+        </div> : <p className="practice-calendar-message">
+          {status === 'loading' ? 'Loading events…' : status === 'error' ? 'Try reloading the page to reconnect to TeamSnap.' : 'No events scheduled for this day.'}
+        </p>}
+      </section>
+
       <section className="panel practice-calendar-panel" aria-label="Practice calendar">
         <div className="practice-calendar-toolbar">
           <div className="practice-month-navigation">
@@ -203,29 +227,6 @@ function PracticeCalendar() {
         {status === 'loading' && <p className="practice-calendar-message">Loading TeamSnap events…</p>}
       </section>
 
-      <section className="panel practice-day-panel" aria-live="polite">
-        <div className="section-heading">
-          <div><h2>{formatLongDate(selectedDate)}</h2><p>{selectedEvents.length ? `${selectedEvents.length} scheduled event${selectedEvents.length === 1 ? '' : 's'}` : 'Team schedule'}</p></div>
-        </div>
-        {selectedEvents.length ? <div className="practice-event-list">
-          {selectedEvents.map((event) => <button
-            className={`practice-event ${event.id === nextPractice?.id ? 'next-practice-event' : ''}`}
-            type="button"
-            key={event.id}
-            onClick={() => setSelectedEvent(event)}
-            aria-label={`View details for ${event.title}`}
-          >
-            <div className="practice-event-time"><Clock3 size={14} /><span>{formatEventTime(event)}</span></div>
-            <div className="practice-event-description">
-              {event.id === nextPractice?.id && <span className="practice-next-badge">Next practice</span>}
-              <strong>{event.title}</strong>
-              {event.location && <span><MapPin size={13} />{event.location}</span>}
-            </div>
-          </button>)}
-        </div> : <p className="practice-calendar-message">
-          {status === 'loading' ? 'Loading events…' : status === 'error' ? 'Try reloading the page to reconnect to TeamSnap.' : 'No events scheduled for this day.'}
-        </p>}
-      </section>
     </main>
     <dialog
       className="practice-event-dialog"
