@@ -63,10 +63,13 @@ function dateLabel(date?: Date, options: Intl.DateTimeFormatOptions = { weekday:
 }
 
 function timeLabel(fixture: TeamFixture, event?: CalendarEvent) {
+  if (event) {
+    const time = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(event.start)
+    return time === '12:00 AM' || time === '1:00 AM' ? 'Time TBD' : time
+  }
   if (fixture.time === '--') return 'Time TBD'
   if (fixture.time) return fixture.time
-  if (!event) return 'Time TBD'
-  return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(event.start)
+  return 'Time TBD'
 }
 
 function venueLocation(fixture: TeamFixture, event?: CalendarEvent) {
