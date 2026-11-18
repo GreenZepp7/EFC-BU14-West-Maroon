@@ -491,12 +491,22 @@ function Dashboard() {
             <span className="section-count">{upcoming.length} FIXTURES</span>
           </div>
           <div className="fixtures-list">
-            {upcoming.length ? upcoming.map((match) => <article className="fixture-row" key={match.fixture.gameId}>
-              <div className="fixture-date"><strong>{dateLabel(match.event?.start, { day: '2-digit' })}</strong><span>{dateLabel(match.event?.start, { month: 'short' }).toUpperCase()}</span></div>
-              <span className={`home-away ${match.isHome ? 'home' : 'away'}`}>{match.isHome ? 'H' : 'A'}</span>
-              <div className="fixture-details"><strong><a className="fixture-team-link" href={officialTeamUrl(match.opponent, snapshot.standings.find((standing) => standing.team === match.opponent)?.group ?? '')} target="_blank" rel="noreferrer">{match.opponent}</a></strong><span><Clock3 size={12} />{timeLabel(match.fixture, match.event)}<MapPin size={12} />{venueLabel(match.fixture, match.event)}</span></div>
-              <span className="opponent-rank">{match.opponentRank ? `#${match.opponentRank}` : '—'}</span>
-            </article>) : <div className="empty-row">No upcoming fixtures.</div>}
+            {upcoming.length ? upcoming.map((match) => {
+              const location = venueLocation(match.fixture, match.event)
+              return <article className="fixture-row" key={match.fixture.gameId}>
+                <div className="fixture-date"><strong>{dateLabel(match.event?.start, { day: '2-digit' })}</strong><span>{dateLabel(match.event?.start, { month: 'short' }).toUpperCase()}</span></div>
+                <span className={`home-away ${match.isHome ? 'home' : 'away'}`}>{match.isHome ? 'H' : 'A'}</span>
+                <div className="fixture-details">
+                  <strong><a className="fixture-team-link" href={officialTeamUrl(match.opponent, snapshot.standings.find((standing) => standing.team === match.opponent)?.group ?? '')} target="_blank" rel="noreferrer">{match.opponent}</a></strong>
+                  <span><Clock3 size={12} />{timeLabel(match.fixture, match.event)}<MapPin size={12} />
+                    {location
+                      ? <a className="fixture-map-link" href={googleMapsUrl(location)} target="_blank" rel="noreferrer">{venueLabel(match.fixture, match.event)}</a>
+                      : venueLabel(match.fixture, match.event)}
+                  </span>
+                </div>
+                <span className="opponent-rank">{match.opponentRank ? `#${match.opponentRank}` : '—'}</span>
+              </article>
+            }) : <div className="empty-row">No upcoming fixtures.</div>}
           </div>
           <p className="prediction-note">Opponent ranks shown; win probabilities are not included in the source data.</p>
         </section>

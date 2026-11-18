@@ -147,6 +147,8 @@ a.next-location:hover { color: var(--maroon); text-decoration: underline; }
 .fixture-details > span svg:nth-of-type(2) { margin-left: 5px; flex: 0 0 auto; }
 .fixture-details > span svg { flex: 0 0 auto; }
 .fixture-team-link:hover, .fixture-team-link:focus-visible { color: var(--maroon); text-decoration: underline; text-underline-offset: 2px; }
+.fixture-map-link { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.fixture-map-link:hover, .fixture-map-link:focus-visible { color: var(--maroon); text-decoration: underline; text-underline-offset: 2px; }
 .opponent-rank { color: #64757a; font: 700 10px 'Manrope', sans-serif; text-align: right; }
 .prediction-note { margin-top: 9px; color: #9aa3a3; font-size: 8px; }
 
