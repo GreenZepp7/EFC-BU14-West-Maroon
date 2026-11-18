@@ -369,7 +369,7 @@ function Dashboard() {
         <a className="source-link" href={teamUrl} target="_blank" rel="noreferrer">Official schedule <ExternalLink size={14} /></a>
         <a className="source-link" href={practiceCalendarViewUrl} target="_blank" rel="noreferrer" aria-label="Open practice schedule calendar">Practice schedule <CalendarDays size={14} /></a>
         <a className="source-link messages-tab-link" href="/?view=messages">
-          <MessageCircle size={14} />Messages <span className="beta-label">Beta</span>
+          <MessageCircle size={14} />Team messages <span className="beta-label">Under development</span>
         </a>
         <button className="update-button" onClick={() => inputRef.current?.click()}><Upload size={15} />Update stats</button>
         <input ref={inputRef} className="visually-hidden" type="file" accept=".html,.htm,.aspx,text/html" onChange={(event) => void importResults(event.target.files?.[0])} />

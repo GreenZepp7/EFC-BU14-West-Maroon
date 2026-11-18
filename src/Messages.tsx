@@ -238,7 +238,7 @@ function Messages() {
       <div className="topbar-actions">
         <a className="source-link" href="/"><ArrowLeft size={14} />Season dashboard</a>
         <a className="source-link messages-tab-link active" href="/?view=messages" aria-current="page">
-          <MessageCircle size={14} />Messages <span className="beta-label">Beta</span>
+          <MessageCircle size={14} />Team messages <span className="beta-label">Under development</span>
         </a>
       </div>
     </header>

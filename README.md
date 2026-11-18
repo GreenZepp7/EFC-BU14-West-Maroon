@@ -15,7 +15,7 @@ Create a production build with `npm run build`, then serve the built app and cal
 
 ## Parent and coach messaging beta
 
-The **Messages · Beta** tab uses Supabase Auth, Postgres, and Realtime. Google sign-in is used; only accounts explicitly approved as active parents or coaches can read or send messages, and coaches can remove messages.
+The **Team messages · Under development** tab uses Supabase Auth, Postgres, and Realtime. Google sign-in is used; only accounts explicitly approved as active parents or coaches can read or send messages, and coaches can remove messages.
 
 1. Create a Supabase project and run [`supabase/schema.sql`](supabase/schema.sql) in its SQL Editor.
 2. In Supabase Auth, enable Google and add the local and production app URLs to the allowed redirect URLs.
