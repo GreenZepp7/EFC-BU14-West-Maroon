@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowUpRight,
   CalendarDays,
   Clock3,
   ExternalLink,
   MapPin,
+  MessageCircle,
   Trophy,
   Upload,
 } from 'lucide-react'
@@ -19,6 +20,7 @@ const calendarApiUrl = '/api/calendar'
 const teamUrl = 'https://wys.sportsaffinity.com/tour/public/info/schedule_results2.asp?sessionguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B&tournamentguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B&flightguid=C48FB252-3C45-4D73-A503-AE7FB8808B8D&tourappguid=A759FCAA-1F75-42A9-A082-66F5AE8D874F'
 const practiceCalendarViewUrl = '/?view=practice'
 const timezone = 'America/Los_Angeles'
+const Messages = lazy(() => import('./Messages'))
 
 function officialTeamUrl(team: string, group: string) {
   const url = new URL(teamUrl)
@@ -366,6 +368,9 @@ function Dashboard() {
       <div className="topbar-actions">
         <a className="source-link" href={teamUrl} target="_blank" rel="noreferrer">Official schedule <ExternalLink size={14} /></a>
         <a className="source-link" href={practiceCalendarViewUrl} target="_blank" rel="noreferrer" aria-label="Open practice schedule calendar">Practice schedule <CalendarDays size={14} /></a>
+        <a className="source-link messages-tab-link" href="/?view=messages">
+          <MessageCircle size={14} />Messages <span className="beta-label">Beta</span>
+        </a>
         <button className="update-button" onClick={() => inputRef.current?.click()}><Upload size={15} />Update stats</button>
         <input ref={inputRef} className="visually-hidden" type="file" accept=".html,.htm,.aspx,text/html" onChange={(event) => void importResults(event.target.files?.[0])} />
       </div>
@@ -522,9 +527,11 @@ function Dashboard() {
 }
 
 function App() {
-    const isPracticeCalendar = new URLSearchParams(window.location.search).get('view') === 'practice'
+    const view = new URLSearchParams(window.location.search).get('view')
     return <>
-      {isPracticeCalendar ? <PracticeCalendar /> : <Dashboard />}
+      {view === 'practice' ? <PracticeCalendar /> : view === 'messages'
+        ? <Suspense fallback={<main className="messages-page" role="status">Loading messages…</main>}><Messages /></Suspense>
+        : <Dashboard />}
       <Analytics />
     </>
 }
