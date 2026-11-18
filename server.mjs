@@ -4,8 +4,11 @@ import { getPracticeCalendar } from './practiceCalendarFeed.mjs'
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import { Readable } from 'node:stream'
 import { extname, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { POST as handleChat } from './api/chat.ts'
+import { GET as handleMcpGet, POST as handleMcpPost } from './api/mcp.ts'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
 const distDirectory = resolve(root, 'dist')
@@ -61,8 +64,49 @@ async function serveStatic(pathname, response) {
   else createReadStream(filePath).pipe(response)
 }
 
+async function serveWebHandler(handler, request, response, requestUrl) {
+  const method = request.method || 'GET'
+  const body = method === 'GET' || method === 'HEAD' ? undefined : Readable.toWeb(request)
+  const webRequest = new Request(requestUrl, {
+    method,
+    headers: request.headers,
+    body,
+    ...(body ? { duplex: 'half' } : {}),
+  })
+
+  try {
+    const webResponse = await handler(webRequest)
+    response.writeHead(webResponse.status, Object.fromEntries(webResponse.headers))
+    if (!webResponse.body) {
+      response.end()
+      return
+    }
+
+    Readable.fromWeb(webResponse.body).pipe(response)
+  } catch (error) {
+    console.error('API request failed:', error)
+    sendJson(response, 500, { error: 'The API request failed.' })
+  }
+}
+
 const server = createServer(async (request, response) => {
   const requestUrl = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`)
+
+  const apiHandlers = {
+    '/api/chat': { POST: handleChat },
+    '/api/mcp': { GET: handleMcpGet, POST: handleMcpPost },
+  }
+  const apiHandler = apiHandlers[requestUrl.pathname]?.[request.method]
+  if (apiHandler) {
+    await serveWebHandler(apiHandler, request, response, requestUrl)
+    return
+  }
+
+  if (requestUrl.pathname in apiHandlers) {
+    const allow = Object.keys(apiHandlers[requestUrl.pathname]).join(', ')
+    response.writeHead(405, { allow }).end('Method not allowed')
+    return
+  }
 
   const isPracticeCalendar = requestUrl.pathname === '/api/practice-calendar'
   if (requestUrl.pathname === '/api/calendar' || requestUrl.pathname === '/api/calendar.ics' || isPracticeCalendar) {

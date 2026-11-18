@@ -1,5 +1,5 @@
 import type { ResultsSnapshot } from './results'
-import { TEAM_NAME } from './team'
+import { TEAM_NAME } from './team.ts'
 
 export const seasonSnapshot: ResultsSnapshot = {
   standings: [

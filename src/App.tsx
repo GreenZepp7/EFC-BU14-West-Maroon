@@ -7,7 +7,6 @@ import {
   MapPin,
   MessageCircle,
   Trophy,
-  Upload,
 } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
 import { parseCalendar, type CalendarEvent } from './calendar'
@@ -21,6 +20,7 @@ const teamUrl = 'https://wys.sportsaffinity.com/tour/public/info/schedule_result
 const practiceCalendarViewUrl = '/?view=practice'
 const timezone = 'America/Los_Angeles'
 const Messages = lazy(() => import('./Messages'))
+const ChatWidget = lazy(() => import('./ChatWidget'))
 
 function officialTeamUrl(team: string, group: string) {
   const url = new URL(teamUrl)
@@ -377,7 +377,6 @@ function Dashboard() {
         <a className="source-link messages-tab-link" href="/?view=messages">
           <MessageCircle size={14} />Team messages <span className="beta-label">Under development</span>
         </a>
-        <button className="update-button" onClick={() => inputRef.current?.click()}><Upload size={15} />Update stats</button>
         <input ref={inputRef} className="visually-hidden" type="file" accept=".html,.htm,.aspx,text/html" onChange={(event) => void importResults(event.target.files?.[0])} />
       </div>
     </header>
@@ -548,6 +547,7 @@ function App() {
       {view === 'practice' ? <PracticeCalendar /> : view === 'messages'
         ? <Suspense fallback={<main className="messages-page" role="status">Loading messages…</main>}><Messages /></Suspense>
         : <Dashboard />}
+      <Suspense fallback={null}><ChatWidget /></Suspense>
       <Analytics />
     </>
 }
