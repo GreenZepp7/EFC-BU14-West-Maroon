@@ -122,6 +122,16 @@ a.next-location:hover { color: var(--maroon); text-decoration: underline; }
 .standings-table tbody tr:last-child td, .splits-table tbody tr:last-child td { border-bottom: 0; }
 .standings-table td:first-child { width: 28px; color: #879395; }
 .standings-table td b, .splits-table td b { color: #35434a; font-weight: 700; }
+.record-value {
+  display: inline-grid;
+  grid-template-columns: 1ch 4px 1ch 4px 1ch;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.record-value span { text-align: center; }
+.record-value i { font-style: normal; text-align: center; }
 .standings-table tr.our-team { background: #f5edef; }
 .standings-table tr.our-team td { color: #623846; font-weight: 600; }
 .club-cell { display: flex; align-items: center; gap: 7px; color: #435158; font-size: 9px; }

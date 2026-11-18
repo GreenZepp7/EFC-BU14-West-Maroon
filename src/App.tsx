@@ -110,6 +110,12 @@ function recordLabel(stats: ReturnType<typeof summarize>) {
   return `${stats.wins}-${stats.draws}-${stats.losses}`
 }
 
+function RecordValue({ wins, draws, losses }: { wins: number; draws: number; losses: number }) {
+  return <span className="record-value" aria-label={`${wins} wins, ${draws} draws, ${losses} losses`}>
+    <span>{wins}</span><i>-</i><span>{draws}</span><i>-</i><span>{losses}</span>
+  </span>
+}
+
 function perGame(value: number, games: number) {
   return games ? (value / games).toFixed(2) : '—'
 }
@@ -469,7 +475,7 @@ function Dashboard() {
                   <td>{standing.rank}</td>
                   <td><span className="club-cell"><i>{standing.group}</i>{isTeamName(standing.team) ? TEAM_NAME : standing.team}</span></td>
                   <td>{played}</td>
-                  <td>{wins}-{draws}-{losses}</td>
+                  <td><RecordValue wins={wins} draws={draws} losses={losses} /></td>
                   <td className={standing.goalDifference > 0 ? 'positive' : standing.goalDifference < 0 ? 'negative' : ''}>{standing.goalDifference > 0 ? '+' : ''}{standing.goalDifference}</td>
                   <td><b>{standing.points}</b></td>
                   <td>{perGame(standing.points, played)}</td>
@@ -506,7 +512,7 @@ function Dashboard() {
             <tbody>{splits.map(({ name, matches: splitMatches }) => {
               const split = summarize(splitMatches)
               return <tr key={name}>
-                <td><b>{name}</b></td><td>{split.games}</td><td>{recordLabel(split)}</td>
+                <td><b>{name}</b></td><td>{split.games}</td><td><RecordValue wins={split.wins} draws={split.draws} losses={split.losses} /></td>
                 <td>{perGame(split.points, split.games)}</td><td>{perGame(split.goalsFor, split.games)}</td>
                 <td>{perGame(split.goalsAgainst, split.games)}</td>
                 <td>{split.games ? `${(split.goalsFor - split.goalsAgainst) > 0 ? '+' : ''}${perGame(split.goalsFor - split.goalsAgainst, split.games)}` : '—'}</td>
