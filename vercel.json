@@ -8,6 +8,9 @@
     },
     "api/mcp.ts": {
       "includeFiles": "{server/scheduleTools.ts,src/seasonSnapshot.ts,src/team.ts,calendarFeed.mjs,practiceCalendarFeed.mjs}"
+    },
+    "api/results.ts": {
+      "includeFiles": "{resultsFeed.mjs}"
     }
   }
 }

@@ -293,12 +293,20 @@ function Dashboard() {
     const refreshResults = async () => {
       try {
         const response = await fetch(resultsApiUrl, { cache: 'no-store' })
+        const content = await response.text()
         if (!response.ok) {
-          const result = await response.json() as { detail?: string }
-          throw new Error(result.detail || 'The results feed could not be reached.')
+          let detail = `The results feed returned HTTP ${response.status}.`
+          try {
+            const result = JSON.parse(content) as { detail?: string; error?: string }
+            detail = result.detail || result.error || detail
+          } catch {
+            const plainText = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+            if (plainText) detail = plainText.slice(0, 200)
+          }
+          throw new Error(detail)
         }
 
-        const parsed = parseResultsHtml(await response.text())
+        const parsed = parseResultsHtml(content)
         if (active) {
           setSnapshot(parsed)
           setStatsSource('Live SportsAffinity results')
