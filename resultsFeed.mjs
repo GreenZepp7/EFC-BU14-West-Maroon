@@ -39,7 +39,7 @@ export async function getResultsPage() {
     if (!upstream.ok) throw new Error(`SportsAffinity returned HTTP ${upstream.status}.`)
 
     const content = await upstream.text()
-    if (!/Total\s*Points/i.test(content) || !/Home Team/i.test(content)) {
+    if (!/Total(?:\s|<[^>]*>)*Points/i.test(content) || !/Home Team/i.test(content)) {
       throw new Error('SportsAffinity responded, but the page did not contain results and standings.')
     }
 
