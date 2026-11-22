@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { getCalendar } from './calendarFeed.mjs'
+import { getResultsPage } from './resultsFeed.mjs'
 import { getPracticeCalendar } from './practiceCalendarFeed.mjs'
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
@@ -109,6 +110,28 @@ const server = createServer(async (request, response) => {
   }
 
   const isPracticeCalendar = requestUrl.pathname === '/api/practice-calendar'
+  if (requestUrl.pathname === '/api/results') {
+    if (request.method !== 'GET') {
+      response.writeHead(405, { allow: 'GET' }).end('Method not allowed')
+      return
+    }
+
+    try {
+      const resultsPage = await getResultsPage()
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'private, no-store',
+      })
+      response.end(resultsPage)
+    } catch (error) {
+      sendJson(response, 502, {
+        error: 'Results feed unavailable',
+        detail: error instanceof Error ? error.message : 'The results request failed.',
+      })
+    }
+    return
+  }
+
   if (requestUrl.pathname === '/api/calendar' || requestUrl.pathname === '/api/calendar.ics' || isPracticeCalendar) {
     if (request.method !== 'GET') {
       response.writeHead(405, { allow: 'GET' }).end('Method not allowed')

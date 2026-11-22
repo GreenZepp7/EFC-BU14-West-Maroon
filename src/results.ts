@@ -50,7 +50,7 @@ export function parseResultsHtml(source: string): ResultsSnapshot {
     tableRows(table).some((row) => rowCells(row).some((cell) => /^goal diff$/i.test(cell))),
   )
 
-  if (!standingsTable) throw new Error('The saved schedule page did not contain a standings table.')
+  if (!standingsTable) throw new Error('The SportsAffinity page did not contain a standings table.')
 
   const standingRows = tableRows(standingsTable)
   const headerIndex = standingRows.findIndex((row) => rowCells(row).some((cell) => /^total\s*points$/i.test(cell)))

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import {
   ArrowUpRight,
   CalendarDays,
@@ -16,6 +16,7 @@ import { seasonSnapshot } from './seasonSnapshot'
 import { isTeamName, TEAM_NAME } from './team'
 
 const calendarApiUrl = '/api/calendar'
+const resultsApiUrl = '/api/results'
 const teamUrl = 'https://wys.sportsaffinity.com/tour/public/info/schedule_results2.asp?sessionguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B&tournamentguid=6DBB3AF6-DEC3-4341-8D25-2DC23F01177B&flightguid=C48FB252-3C45-4D73-A503-AE7FB8808B8D&tourappguid=A759FCAA-1F75-42A9-A082-66F5AE8D874F'
 const practiceCalendarViewUrl = '/?view=practice'
 const timezone = 'America/Los_Angeles'
@@ -250,10 +251,9 @@ function Dashboard() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [snapshot, setSnapshot] = useState<ResultsSnapshot>(seasonSnapshot)
   const [feedMessage, setFeedMessage] = useState('')
-  const [statsSource, setStatsSource] = useState('Provided SportsAffinity export')
-  const [importMessage, setImportMessage] = useState('')
+  const [statsSource, setStatsSource] = useState('Included season snapshot')
+  const [resultsMessage, setResultsMessage] = useState('')
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     let active = true
@@ -280,6 +280,37 @@ function Dashboard() {
         }
       })
     return () => { active = false }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    const refreshResults = async () => {
+      try {
+        const response = await fetch(resultsApiUrl, { cache: 'no-store' })
+        if (!response.ok) {
+          const result = await response.json() as { detail?: string }
+          throw new Error(result.detail || 'The results feed could not be reached.')
+        }
+
+        const parsed = parseResultsHtml(await response.text())
+        if (active) {
+          setSnapshot(parsed)
+          setStatsSource('Live SportsAffinity results')
+          setResultsMessage('')
+        }
+      } catch (error) {
+        if (active) {
+          setResultsMessage(error instanceof Error ? error.message : 'The results feed could not be reached.')
+        }
+      }
+    }
+
+    void refreshResults()
+    const refreshInterval = window.setInterval(() => void refreshResults(), 15 * 60 * 1000)
+    return () => {
+      active = false
+      window.clearInterval(refreshInterval)
+    }
   }, [])
 
   const teamStanding = snapshot.standings.find((standing) => isTeamName(standing.team))
@@ -351,20 +382,6 @@ function Dashboard() {
     { name: 'Last 3', matches: recentThree },
   ]
 
-  async function importResults(file?: File) {
-    if (!file) return
-    try {
-      const parsed = parseResultsHtml(await file.text())
-      setSnapshot(parsed)
-      setStatsSource(file.name)
-      setImportMessage('')
-    } catch (error) {
-      setImportMessage(error instanceof Error ? error.message : 'The results page could not be parsed.')
-    } finally {
-      if (inputRef.current) inputRef.current.value = ''
-    }
-  }
-
   return <div className="dashboard-shell">
     <header className="topbar">
       <a className="brand" href={teamUrl} target="_blank" rel="noreferrer" aria-label="Eastside FC schedule">
@@ -377,7 +394,6 @@ function Dashboard() {
         <a className="source-link messages-tab-link" href="/?view=messages">
           <MessageCircle size={14} />Team messages <span className="beta-label">Under development</span>
         </a>
-        <input ref={inputRef} className="visually-hidden" type="file" accept=".html,.htm,.aspx,text/html" onChange={(event) => void importResults(event.target.files?.[0])} />
       </div>
     </header>
 
@@ -418,7 +434,7 @@ function Dashboard() {
       </section>
 
       {status === 'error' && <div className="notice error-notice"><span>Schedule feed unavailable: {feedMessage}</span><a href={teamUrl} target="_blank" rel="noreferrer">Open schedule <ArrowUpRight size={14} /></a></div>}
-      {importMessage && <div className="notice error-notice">{importMessage}</div>}
+      {resultsMessage && <div className="notice error-notice">Automatic results refresh failed: {resultsMessage}. Showing the most recent available snapshot.</div>}
 
       <section className="metric-grid" aria-label="Season statistics">
         <article className="metric-card primary-metric"><span>POSITION</span><strong>{teamStanding ? ordinal(teamStanding.rank) : '—'}</strong><small>of {snapshot.standings.length} clubs</small></article>
@@ -535,7 +551,6 @@ function Dashboard() {
       <footer className="dashboard-footer">
         <span><span className={`source-dot ${status}`} />{status === 'ready' ? 'Fixture schedule connected' : status === 'loading' ? 'Connecting to fixture schedule' : 'Fixture schedule offline'}</span>
         <span>Stats: {statsSource}</span>
-        <button onClick={() => inputRef.current?.click()}><CalendarDays size={13} />Replace results export</button>
       </footer>
     </main>
   </div>
