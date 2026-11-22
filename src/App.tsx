@@ -12,7 +12,6 @@ import { Analytics } from '@vercel/analytics/react'
 import { parseCalendar, type CalendarEvent } from './calendar'
 import { parseResultsHtml, type ResultsSnapshot, type Standing, type TeamFixture } from './results'
 import PracticeCalendar from './PracticeCalendar'
-import { seasonSnapshot } from './seasonSnapshot'
 import { isTeamName, TEAM_NAME } from './team'
 
 const calendarApiUrl = '/api/calendar'
@@ -249,10 +248,11 @@ function DashboardSkeleton() {
 
 function Dashboard() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
-  const [snapshot, setSnapshot] = useState<ResultsSnapshot>(seasonSnapshot)
+  const [snapshot, setSnapshot] = useState<ResultsSnapshot>({ standings: [], games: [] })
   const [feedMessage, setFeedMessage] = useState('')
-  const [statsSource, setStatsSource] = useState('Included season snapshot')
+  const [statsSource, setStatsSource] = useState('Waiting for live results')
   const [resultsMessage, setResultsMessage] = useState('')
+  const [resultsStatus, setResultsStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
   useEffect(() => {
@@ -297,10 +297,12 @@ function Dashboard() {
           setSnapshot(parsed)
           setStatsSource('Live SportsAffinity results')
           setResultsMessage('')
+          setResultsStatus('ready')
         }
       } catch (error) {
         if (active) {
           setResultsMessage(error instanceof Error ? error.message : 'The results feed could not be reached.')
+          setResultsStatus((current) => current === 'ready' ? 'ready' : 'error')
         }
       }
     }
@@ -382,6 +384,8 @@ function Dashboard() {
     { name: 'Last 3', matches: recentThree },
   ]
 
+  const dashboardLoading = status === 'loading' || resultsStatus === 'loading'
+
   return <div className="dashboard-shell">
     <header className="topbar">
       <a className="brand" href={teamUrl} target="_blank" rel="noreferrer" aria-label="Eastside FC schedule">
@@ -397,8 +401,9 @@ function Dashboard() {
       </div>
     </header>
 
-    {status === 'loading' && <DashboardSkeleton />}
-    <main className="dashboard" hidden={status === 'loading'}>
+    {dashboardLoading && <DashboardSkeleton />}
+    {resultsStatus === 'error' && status !== 'loading' && <div className="notice error-notice">Automatic results refresh failed: {resultsMessage}. No saved results are being shown.</div>}
+    <main className="dashboard" hidden={dashboardLoading || resultsStatus !== 'ready'}>
       <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow"><span />26/27 REGIONAL CLUB LEAGUE <b>·</b> BOYS UNDER 14 <b>·</b> DIV 2 NORTH</div>
@@ -434,7 +439,7 @@ function Dashboard() {
       </section>
 
       {status === 'error' && <div className="notice error-notice"><span>Schedule feed unavailable: {feedMessage}</span><a href={teamUrl} target="_blank" rel="noreferrer">Open schedule <ArrowUpRight size={14} /></a></div>}
-      {resultsMessage && <div className="notice error-notice">Automatic results refresh failed: {resultsMessage}. Showing the most recent available snapshot.</div>}
+      {resultsMessage && <div className="notice error-notice">Live results refresh failed: {resultsMessage}. Showing the last successfully loaded live results.</div>}
 
       <section className="metric-grid" aria-label="Season statistics">
         <article className="metric-card primary-metric"><span>POSITION</span><strong>{teamStanding ? ordinal(teamStanding.rank) : '—'}</strong><small>of {snapshot.standings.length} clubs</small></article>
