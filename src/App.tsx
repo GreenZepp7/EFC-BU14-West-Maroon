@@ -135,18 +135,24 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
-function predictNextFixture(nextFixture: MatchView | undefined, completed: MatchView[]) {
+function predictNextFixture(nextFixture: MatchView | undefined, completed: MatchView[], standingCount: number) {
   if (!nextFixture || !completed.length) return null
 
   const recent = completed.slice(-5)
   const recentStats = summarize(recent)
   const recentPointsPerGame = recentStats.games ? recentStats.points / recentStats.games : 0
   const recentGoalDifference = recentStats.games ? (recentStats.goalsFor - recentStats.goalsAgainst) / recentStats.games : 0
-  const opponentAdjustment = nextFixture.opponentRank ? clamp((11 - nextFixture.opponentRank) * 0.03, -0.14, 0.18) : 0.04
+  const opponentAdjustment = nextFixture.opponentRank && standingCount > 1
+    ? clamp((nextFixture.opponentRank - (standingCount + 1) / 2) * 0.03, -0.12, 0.12)
+    : 0
   const homeAdjustment = nextFixture.isHome ? 0.1 : -0.04
-  const winChance = clamp(0.38 + (recentPointsPerGame / 3) * 0.42 + recentGoalDifference * 0.08 + homeAdjustment + opponentAdjustment, 0.2, 0.8)
-  const drawChance = clamp(0.26 + (3 - recentPointsPerGame) * 0.08 - Math.abs(recentGoalDifference) * 0.05, 0.12, 0.35)
-  const lossChance = clamp(1 - winChance - drawChance, 0.1, 0.5)
+  const winWeight = clamp(0.38 + (recentPointsPerGame / 3) * 0.42 + recentGoalDifference * 0.08 + homeAdjustment + opponentAdjustment, 0.2, 0.8)
+  const drawWeight = clamp(0.26 + (3 - recentPointsPerGame) * 0.08 - Math.abs(recentGoalDifference) * 0.05, 0.12, 0.35)
+  const lossWeight = clamp(1 - winWeight - drawWeight, 0.1, 0.5)
+  const totalWeight = winWeight + drawWeight + lossWeight
+  const winChance = winWeight / totalWeight
+  const drawChance = drawWeight / totalWeight
+  const lossChance = lossWeight / totalWeight
 
   let outcome: MatchView['outcome']
   if (winChance >= drawChance && winChance >= lossChance) outcome = 'W'
@@ -375,7 +381,10 @@ function Dashboard() {
   const pointsBehind = leader && teamStanding ? Math.max(0, leader.points - teamStanding.points) : 0
   const chartSeries = makePointSeries(snapshot.standings, teamStanding)
   const nextFixture = upcoming[0]
-  const nextPrediction = useMemo(() => predictNextFixture(nextFixture, completed), [nextFixture, completed])
+  const nextPrediction = useMemo(
+    () => predictNextFixture(nextFixture, completed, snapshot.standings.length),
+    [nextFixture, completed, snapshot.standings.length],
+  )
   const nextLocation = nextFixture ? venueLocation(nextFixture.fixture, nextFixture.event) : ''
   const splits = [
     { name: 'Overall', matches: completed },
