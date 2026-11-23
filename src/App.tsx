@@ -162,7 +162,9 @@ function predictNextFixture(nextFixture: MatchView | undefined, completed: Match
   const confidence = Math.round(Math.max(winChance, drawChance, lossChance) * 100)
   const summary = outcome === 'W' ? 'Likely win' : outcome === 'D' ? 'Likely draw' : 'Likely loss'
   const note = outcome === 'W'
-    ? 'Recent form and home edge suggest the next result is in our favour.'
+    ? nextFixture.isHome
+      ? 'Recent form and the home edge suggest the next result is in our favour.'
+      : 'Recent form suggests the next result is in our favour despite the away fixture.'
     : outcome === 'D'
       ? 'A tight contest is the most likely outcome based on the recent run.'
       : 'Opposition strength and recent defending point to a tougher test.'
