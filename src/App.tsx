@@ -161,13 +161,20 @@ function predictNextFixture(nextFixture: MatchView | undefined, completed: Match
 
   const confidence = Math.round(Math.max(winChance, drawChance, lossChance) * 100)
   const summary = outcome === 'W' ? 'Likely win' : outcome === 'D' ? 'Likely draw' : 'Likely loss'
+  const venueContext = nextFixture.isHome ? 'at home' : 'away'
+  const formContext = recentGoalDifference > 0.25
+    ? 'with a positive recent goal difference'
+    : recentGoalDifference < -0.25
+      ? 'while recent results include a negative goal difference'
+      : 'with an even recent goal difference'
+  const opponentContext = nextFixture.opponentRank
+    ? `against the ${ordinal(nextFixture.opponentRank)}-placed opponent`
+    : 'against the next opponent'
   const note = outcome === 'W'
-    ? nextFixture.isHome
-      ? 'Recent form and the home edge suggest the next result is in our favour.'
-      : 'Recent form suggests the next result is in our favour despite the away fixture.'
+    ? `Recent form ${formContext} supports a win ${venueContext} ${opponentContext}.`
     : outcome === 'D'
-      ? 'A tight contest is the most likely outcome based on the recent run.'
-      : 'Opposition strength and recent defending point to a tougher test.'
+      ? `The recent record and ${venueContext} fixture point to a close contest ${opponentContext}.`
+      : `The ${venueContext} fixture ${opponentContext} and recent defending point to a difficult result.`
 
   return { outcome, summary, confidence, note }
 }
