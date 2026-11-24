@@ -10,6 +10,7 @@ import { extname, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { POST as handleChat } from './api/chat.ts'
 import { GET as handleMcpGet, POST as handleMcpPost } from './api/mcp.ts'
+import { GET as handleAdminMembersGet, POST as handleAdminMembersPost } from './api/admin-members.ts'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
 const distDirectory = resolve(root, 'dist')
@@ -96,6 +97,7 @@ const server = createServer(async (request, response) => {
   const apiHandlers = {
     '/api/chat': { POST: handleChat },
     '/api/mcp': { GET: handleMcpGet, POST: handleMcpPost },
+    '/api/admin-members': { GET: handleAdminMembersGet, POST: handleAdminMembersPost },
   }
   const apiHandler = apiHandlers[requestUrl.pathname]?.[request.method]
   if (apiHandler) {

@@ -15,22 +15,11 @@ Create a production build with `npm run build`, then serve the built app and cal
 
 ## Parent and coach messaging beta
 
-The **Team messages · Under development** tab uses Supabase Auth, Postgres, and Realtime. Google sign-in is used; only accounts explicitly approved as active parents or coaches can read or send messages, and coaches can remove messages.
+The **Team messages · Under development** tab uses Supabase Auth, Postgres, and Realtime. Google sign-in is used; only approved parents and coaches can read or send messages, and coaches can remove messages. Designated admins approve users in the messaging page without editing SQL.
 
 1. Create a Supabase project and run [`supabase/schema.sql`](supabase/schema.sql) in its SQL Editor.
 2. In Supabase Auth, enable Google and add the local and production app URLs to the allowed redirect URLs.
-3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env` for local work and in the production hosting environment. These are client-side values; never put a Supabase service-role key in the app.
-4. Each parent or coach signs in once. An administrator then approves them by inserting their Supabase Auth user ID into `public.beta_members` from the SQL Editor:
+3. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for the frontend. On the server only, set `SUPABASE_SERVICE_ROLE_KEY` and `MESSAGES_ADMIN_EMAILS` (comma-separated, lowercase email addresses). Never expose the service-role key as a `VITE_` variable.
+4. For an existing project, run [`supabase/admin-messaging-setup.sql`](supabase/admin-messaging-setup.sql) once in the SQL Editor. For a new project, `schema.sql` already includes the setup. Add `paulius.meskauskas@gmail.com` to `MESSAGES_ADMIN_EMAILS` to enable the initial admin panel. Users must sign in once before they appear in the panel.
 
-   ```sql
-   insert into public.beta_members (user_id, display_name, role)
-   select id, 'Display Name', 'parent'
-   from auth.users
-   where lower(email) = lower('parent@example.com')
-   on conflict (user_id) do update
-   set display_name = excluded.display_name, role = excluded.role, active = true;
-   ```
-
-   Use `coach` for a coach account. To revoke access, set that member's `active` value to `false`.
-
-Messages are shared with all approved beta members. Do not use the beta for sensitive information or emergencies.
+Messages are shared only with approved beta members. Do not use the beta for sensitive information or emergencies.

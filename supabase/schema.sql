@@ -2,11 +2,60 @@ create type public.beta_role as enum ('parent', 'coach');
 
 create table public.beta_members (
   user_id uuid primary key references auth.users (id) on delete restrict,
+  email text,
   display_name text not null check (char_length(btrim(display_name)) between 1 and 80),
   role public.beta_role not null,
-  active boolean not null default true,
+  active boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.beta_members (user_id, email, display_name, role, active)
+  values (
+    new.id,
+    new.email,
+    left(coalesce(
+      nullif(btrim(new.raw_user_meta_data ->> 'full_name'), ''),
+      nullif(btrim(new.raw_user_meta_data ->> 'name'), ''),
+      nullif(split_part(coalesce(new.email, ''), '@', 1), ''),
+      'Google user'
+    ), 80),
+    'parent'::public.beta_role,
+    false
+  )
+  on conflict (user_id) do update
+  set email = excluded.email, display_name = excluded.display_name;
+  return new;
+end;
+$$;
+
+revoke all on function public.handle_new_auth_user() from public, anon, authenticated;
+
+create trigger on_auth_user_created
+  after insert or update of email, raw_user_meta_data on auth.users
+  for each row execute function public.handle_new_auth_user();
+
+insert into public.beta_members (user_id, email, display_name, role, active)
+select
+  id,
+  email,
+  left(coalesce(
+    nullif(btrim(raw_user_meta_data ->> 'full_name'), ''),
+    nullif(btrim(raw_user_meta_data ->> 'name'), ''),
+    nullif(split_part(coalesce(email, ''), '@', 1), ''),
+    'Google user'
+  ), 80),
+  'parent'::public.beta_role,
+  false
+from auth.users
+on conflict (user_id) do update
+set email = excluded.email, display_name = excluded.display_name;
 
 create table public.beta_messages (
   id bigint generated always as identity primary key,
@@ -70,7 +119,7 @@ create policy "Coaches can remove messages"
   using (public.is_beta_coach());
 
 revoke all on public.beta_members, public.beta_messages from anon, authenticated;
-grant select on public.beta_members to authenticated;
+grant select (user_id, display_name, role, active, created_at) on public.beta_members to authenticated;
 grant select, insert, delete on public.beta_messages to authenticated;
 grant usage, select on sequence public.beta_messages_id_seq to authenticated;
 

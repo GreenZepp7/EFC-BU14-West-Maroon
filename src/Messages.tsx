@@ -6,6 +6,7 @@ import type { Database } from './database.types'
 import { supabase } from './supabase'
 
 type Member = Database['public']['Tables']['beta_members']['Row']
+type MemberAccess = Pick<Member, 'user_id' | 'display_name' | 'role' | 'active' | 'created_at'>
 type Message = Database['public']['Tables']['beta_messages']['Row']
 type MessageView = Message & { author: Pick<Member, 'display_name' | 'role'> | null }
 
@@ -28,10 +29,16 @@ function Messages() {
   const [authReady, setAuthReady] = useState(false)
   const [authBusy, setAuthBusy] = useState(false)
   const [authError, setAuthError] = useState('')
-  const [member, setMember] = useState<Member | null>(null)
+  const [member, setMember] = useState<MemberAccess | null>(null)
   const [memberChecked, setMemberChecked] = useState(false)
   const [memberAttempt, setMemberAttempt] = useState(0)
   const [memberError, setMemberError] = useState('')
+  const [rosterAdmin, setRosterAdmin] = useState(false)
+  const [showRoster, setShowRoster] = useState(false)
+  const [roster, setRoster] = useState<Member[]>([])
+  const [rosterLoading, setRosterLoading] = useState(false)
+  const [rosterError, setRosterError] = useState('')
+  const [rosterActionId, setRosterActionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<MessageView[]>([])
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [messagesError, setMessagesError] = useState('')
@@ -100,6 +107,41 @@ function Messages() {
 
     return () => { active = false }
   }, [client, session, memberAttempt])
+
+  const loadRoster = useCallback(async (accessToken: string) => {
+    const response = await fetch('/api/admin-members', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (response.status === 403) {
+      setRosterAdmin(false)
+      setShowRoster(false)
+      return
+    }
+    const result = await response.json() as { error?: string; members?: Member[] }
+    if (!response.ok) throw new Error(result.error ?? 'Could not load the admin panel.')
+    setRosterAdmin(true)
+    setRoster(result.members ?? [])
+  }, [])
+
+  useEffect(() => {
+    if (!session) {
+      setRosterAdmin(false)
+      setShowRoster(false)
+      setRoster([])
+      setRosterError('')
+      return
+    }
+
+    let active = true
+    setRosterLoading(true)
+    setRosterError('')
+    void loadRoster(session.access_token).catch((error: unknown) => {
+      if (active) setRosterError(errorText(error))
+    }).finally(() => {
+      if (active) setRosterLoading(false)
+    })
+    return () => { active = false }
+  }, [session, loadRoster])
 
   const loadMessages = useCallback(async () => {
     if (!client || !member) return
@@ -191,6 +233,33 @@ function Messages() {
     }
   }
 
+  async function updateRosterMember(userId: string, role: Member['role'], active: boolean) {
+    if (!session || rosterActionId) return
+    setRosterActionId(userId)
+    setRosterError('')
+    try {
+      const response = await fetch('/api/admin-members', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId, role, active }),
+      })
+      const result = await response.json() as { error?: string; member?: Member }
+      if (!response.ok || !result.member) throw new Error(result.error ?? 'Could not update messaging access.')
+      setRoster((current) => current.map((item) => item.user_id === userId ? result.member! : item))
+      if (userId === session.user.id) {
+        setMember(result.member)
+        setMemberChecked(true)
+      }
+    } catch (error) {
+      setRosterError(errorText(error))
+    } finally {
+      setRosterActionId(null)
+    }
+  }
+
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const body = draft.trim()
@@ -253,13 +322,52 @@ function Messages() {
         <ShieldCheck size={25} aria-hidden="true" />
       </section>
 
+      {session && rosterAdmin && <section className="panel messages-access-panel">
+        <button className="messages-secondary-button" type="button" onClick={() => setShowRoster((visible) => !visible)}>
+          {showRoster ? 'Hide admin panel' : 'Manage parent and coach access'}
+        </button>
+        {showRoster && <div className="messages-admin-panel">
+          <h2>Messaging access</h2>
+          <p>Approve a signed-in user as a parent or coach, or revoke their access.</p>
+          {rosterError && <p className="messages-inline-error" role="alert">{rosterError}</p>}
+          {rosterLoading ? <p role="status">Loading accounts…</p> : roster.length ? roster.map((candidate) =>
+            <div className="messages-admin-member" key={candidate.user_id}>
+              <div>
+                <strong>{candidate.display_name}</strong>
+                <span>{candidate.email ?? 'No email'} · {candidate.active ? candidate.role : 'Pending'}</span>
+              </div>
+              {candidate.active ? <>
+                <button className="messages-secondary-button" type="button" disabled={rosterActionId !== null}
+                  onClick={() => void updateRosterMember(candidate.user_id, candidate.role === 'parent' ? 'coach' : 'parent', true)}>
+                  Make {candidate.role === 'parent' ? 'coach' : 'parent'}
+                </button>
+                <button className="messages-secondary-button" type="button" disabled={rosterActionId !== null}
+                  onClick={() => void updateRosterMember(candidate.user_id, candidate.role, false)}>
+                  Revoke
+                </button>
+              </> : <>
+                <button className="messages-primary-button" type="button" disabled={rosterActionId !== null}
+                  onClick={() => void updateRosterMember(candidate.user_id, 'parent', true)}>
+                  Approve parent
+                </button>
+                <button className="messages-primary-button" type="button" disabled={rosterActionId !== null}
+                  onClick={() => void updateRosterMember(candidate.user_id, 'coach', true)}>
+                  Approve coach
+                </button>
+              </>}
+            </div>
+          ) : !rosterLoading ? <p>No signed-in users yet.</p> : null}
+        </div>}
+      </section>}
+      {session && rosterError && !rosterAdmin && <p className="messages-inline-error messages-page-error" role="alert">{rosterError}</p>}
+
       {!client ? <section className="panel messages-access-panel">
         <h2>Messaging is not configured yet</h2>
         <p>Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to the environment, apply the Supabase schema, and enable Google sign-in.</p>
       </section> : !authReady ? <section className="panel messages-access-panel" role="status">
         <p>Checking sign-in…</p>
       </section> : !session ? <section className="panel messages-access-panel">
-        <h2>Parent and coach access</h2>
+        <h2>Parent and coach messages</h2>
         <p>Sign in with the Google account approved for the team. Only accounts added to the beta roster can read or send messages.</p>
         <button className="messages-primary-button" type="button" onClick={() => void signIn()} disabled={authBusy}>
           <LogIn size={16} />{authBusy ? 'Connecting…' : 'Continue with Google'}
@@ -273,7 +381,7 @@ function Messages() {
         <button className="messages-secondary-button" type="button" onClick={() => void signOut()}><LogOut size={15} />Sign out</button>
       </section> : !member ? <section className="panel messages-access-panel">
         <h2>Access is pending</h2>
-        <p><strong>{session.user.email ?? 'This Google account'}</strong> is signed in, but is not on the approved parent-and-coach roster yet. Ask a coach to approve this account.</p>
+        <p><strong>{session.user.email ?? 'This Google account'}</strong> is signed in, but is not on the approved parent-and-coach roster yet. Ask a messaging admin to approve this account.</p>
         <button className="messages-secondary-button" type="button" onClick={() => setMemberAttempt((attempt) => attempt + 1)}>Check access again</button>
         <button className="messages-secondary-button" type="button" onClick={() => void signOut()}><LogOut size={15} />Sign out</button>
       </section> : <>

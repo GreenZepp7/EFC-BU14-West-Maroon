@@ -4,6 +4,7 @@ export type Database = {
       beta_members: {
         Row: {
           user_id: string
+          email: string | null
           display_name: string
           role: 'parent' | 'coach'
           active: boolean
@@ -11,6 +12,7 @@ export type Database = {
         }
         Insert: {
           user_id: string
+          email?: string | null
           display_name: string
           role: 'parent' | 'coach'
           active?: boolean
@@ -18,6 +20,7 @@ export type Database = {
         }
         Update: {
           user_id?: string
+          email?: string | null
           display_name?: string
           role?: 'parent' | 'coach'
           active?: boolean
