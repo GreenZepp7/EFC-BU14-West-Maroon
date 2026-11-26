@@ -1,4 +1,4 @@
-create type public.beta_role as enum ('parent', 'coach');
+create type public.beta_role as enum ('parent', 'coach', 'player');
 
 create table public.beta_members (
   user_id uuid primary key references auth.users (id) on delete restrict,

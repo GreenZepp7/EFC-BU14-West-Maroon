@@ -1,3 +1,5 @@
+alter type public.beta_role add value if not exists 'player';
+
 alter table public.beta_members add column if not exists email text;
 alter table public.beta_members alter column active set default false;
 revoke select on public.beta_members from authenticated;

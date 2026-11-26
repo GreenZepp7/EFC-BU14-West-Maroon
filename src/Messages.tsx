@@ -10,6 +10,7 @@ type MemberAccess = Pick<Member, 'user_id' | 'display_name' | 'role' | 'active' 
 type Message = Database['public']['Tables']['beta_messages']['Row']
 type MessageView = Message & { author: Pick<Member, 'display_name' | 'role'> | null }
 
+const memberRoles: Member['role'][] = ['parent', 'coach', 'player']
 function errorText(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong. Please try again.'
 }
@@ -315,9 +316,9 @@ function Messages() {
     <main className="messages-page">
       <section className="messages-title">
         <div>
-          <div className="eyebrow"><span />PARENTS &amp; COACHES <b>·</b> BETA</div>
+          <div className="eyebrow"><span />PARENTS, COACHES &amp; PLAYERS <b>·</b> BETA</div>
           <h1>Team messages</h1>
-          <p>A private group space for approved parents and coaches.</p>
+          <p>A private group space for approved parents, coaches, and players.</p>
         </div>
         <ShieldCheck size={25} aria-hidden="true" />
       </section>
@@ -328,7 +329,7 @@ function Messages() {
         </button>
         {showRoster && <div className="messages-admin-panel">
           <h2>Messaging access</h2>
-          <p>Approve a signed-in user as a parent or coach, or revoke their access.</p>
+          <p>Approve a signed-in user as a parent, coach, or player, or change/revoke their access.</p>
           {rosterError && <p className="messages-inline-error" role="alert">{rosterError}</p>}
           {rosterLoading ? <p role="status">Loading accounts…</p> : roster.length ? roster.map((candidate) =>
             <div className="messages-admin-member" key={candidate.user_id}>
@@ -337,23 +338,21 @@ function Messages() {
                 <span>{candidate.email ?? 'No email'} · {candidate.active ? candidate.role : 'Pending'}</span>
               </div>
               {candidate.active ? <>
-                <button className="messages-secondary-button" type="button" disabled={rosterActionId !== null}
-                  onClick={() => void updateRosterMember(candidate.user_id, candidate.role === 'parent' ? 'coach' : 'parent', true)}>
-                  Make {candidate.role === 'parent' ? 'coach' : 'parent'}
-                </button>
+                {memberRoles.filter((role) => role !== candidate.role).map((role) => <button
+                  className="messages-secondary-button" type="button" key={role} disabled={rosterActionId !== null}
+                  onClick={() => void updateRosterMember(candidate.user_id, role, true)}>
+                  Make {role}
+                </button>)}
                 <button className="messages-secondary-button" type="button" disabled={rosterActionId !== null}
                   onClick={() => void updateRosterMember(candidate.user_id, candidate.role, false)}>
                   Revoke
                 </button>
               </> : <>
-                <button className="messages-primary-button" type="button" disabled={rosterActionId !== null}
-                  onClick={() => void updateRosterMember(candidate.user_id, 'parent', true)}>
-                  Approve parent
-                </button>
-                <button className="messages-primary-button" type="button" disabled={rosterActionId !== null}
-                  onClick={() => void updateRosterMember(candidate.user_id, 'coach', true)}>
-                  Approve coach
-                </button>
+                {memberRoles.map((role) => <button className="messages-primary-button" type="button" key={role}
+                  disabled={rosterActionId !== null}
+                  onClick={() => void updateRosterMember(candidate.user_id, role, true)}>
+                  Approve {role}
+                </button>)}
               </>}
             </div>
           ) : !rosterLoading ? <p>No signed-in users yet.</p> : null}
@@ -368,7 +367,7 @@ function Messages() {
         <p>Checking sign-in…</p>
       </section> : !session ? <section className="panel messages-access-panel">
         <h2>Parent and coach messages</h2>
-        <p>Sign in with the Google account approved for the team. Only accounts added to the beta roster can read or send messages.</p>
+        <p>Sign in with the Google account approved for the team. Only approved parents, coaches, and players can read or send messages.</p>
         <button className="messages-primary-button" type="button" onClick={() => void signIn()} disabled={authBusy}>
           <LogIn size={16} />{authBusy ? 'Connecting…' : 'Continue with Google'}
         </button>

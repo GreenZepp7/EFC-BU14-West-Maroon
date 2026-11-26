@@ -6,7 +6,7 @@ export type Database = {
           user_id: string
           email: string | null
           display_name: string
-          role: 'parent' | 'coach'
+          role: 'parent' | 'coach' | 'player'
           active: boolean
           created_at: string
         }
@@ -14,7 +14,7 @@ export type Database = {
           user_id: string
           email?: string | null
           display_name: string
-          role: 'parent' | 'coach'
+          role: 'parent' | 'coach' | 'player'
           active?: boolean
           created_at?: string
         }
@@ -22,7 +22,7 @@ export type Database = {
           user_id?: string
           email?: string | null
           display_name?: string
-          role?: 'parent' | 'coach'
+          role?: 'parent' | 'coach' | 'player'
           active?: boolean
           created_at?: string
         }
@@ -62,7 +62,7 @@ export type Database = {
       is_beta_coach: { Args: Record<PropertyKey, never>; Returns: boolean }
     }
     Enums: {
-      beta_role: 'parent' | 'coach'
+      beta_role: 'parent' | 'coach' | 'player'
     }
     CompositeTypes: { [_ in never]: never }
   }

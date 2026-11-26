@@ -4,7 +4,7 @@ import type { Database } from '../src/database.types'
 
 const updateSchema = z.object({
   user_id: z.string().uuid(),
-  role: z.enum(['parent', 'coach']),
+  role: z.enum(['parent', 'coach', 'player']),
   active: z.boolean(),
 })
 
