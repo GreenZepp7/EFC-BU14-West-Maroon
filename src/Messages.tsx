@@ -9,8 +9,9 @@ type Member = Database['public']['Tables']['beta_members']['Row']
 type MemberAccess = Pick<Member, 'user_id' | 'display_name' | 'role' | 'active' | 'created_at'>
 type Message = Database['public']['Tables']['beta_messages']['Row']
 type MessageView = Message & { author: Pick<Member, 'display_name' | 'role'> | null }
-
+type PushStatus = 'checking' | 'unsupported' | 'off' | 'on' | 'denied' | 'error'
 const memberRoles: Member['role'][] = ['parent', 'coach', 'player']
+
 function errorText(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong. Please try again.'
 }
@@ -24,6 +25,48 @@ function messageTime(value: string) {
   }).format(new Date(value))
 }
 
+function decodeVapidPublicKey(value: string) {
+  const padding = '='.repeat((4 - value.length % 4) % 4)
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/')
+  return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))
+}
+
+function isIosDevice() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+}
+
+function isInstalledApp() {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || (navigator as Navigator & { standalone?: boolean }).standalone === true
+}
+
+async function savePushSubscription(client: NonNullable<typeof supabase>, userId: string, subscription: PushSubscription) {
+  const keys = subscription.toJSON().keys
+  if (!keys?.p256dh || !keys.auth) throw new Error('The browser returned an incomplete push subscription.')
+
+  const { error } = await client.from('beta_push_subscriptions').upsert({
+    user_id: userId,
+    endpoint: subscription.endpoint,
+    p256dh: keys.p256dh,
+    auth: keys.auth,
+  }, { onConflict: 'user_id,endpoint' })
+  if (error) throw error
+}
+
+async function removePushSubscription(
+  client: NonNullable<typeof supabase>,
+  userId: string,
+  subscription: PushSubscription,
+) {
+  await subscription.unsubscribe()
+  const { error } = await client.from('beta_push_subscriptions')
+    .delete()
+    .eq('user_id', userId)
+    .eq('endpoint', subscription.endpoint)
+  if (error) throw error
+}
+
 function Messages() {
   const client = supabase
   const [session, setSession] = useState<Session | null>(null)
@@ -34,6 +77,8 @@ function Messages() {
   const [memberChecked, setMemberChecked] = useState(false)
   const [memberAttempt, setMemberAttempt] = useState(0)
   const [memberError, setMemberError] = useState('')
+  const [pushStatus, setPushStatus] = useState<PushStatus>('checking')
+  const [pushError, setPushError] = useState('')
   const [rosterAdmin, setRosterAdmin] = useState(false)
   const [showRoster, setShowRoster] = useState(false)
   const [roster, setRoster] = useState<Member[]>([])
@@ -108,6 +153,44 @@ function Messages() {
 
     return () => { active = false }
   }, [client, session, memberAttempt])
+
+  useEffect(() => {
+    if (!client || !session || !member) {
+      setPushStatus('off')
+      setPushError('')
+      return
+    }
+
+    if (!window.isSecureContext || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      setPushStatus('unsupported')
+      return
+    }
+
+    let active = true
+    setPushStatus('checking')
+    setPushError('')
+    void (async () => {
+      const registration = await navigator.serviceWorker.register('/sw.js')
+      const subscription = await registration.pushManager.getSubscription()
+      if (!active) return
+
+      if (Notification.permission === 'denied') {
+        setPushStatus('denied')
+      } else if (subscription && Notification.permission === 'granted') {
+        await savePushSubscription(client, session.user.id, subscription)
+        if (active) setPushStatus('on')
+      } else {
+        setPushStatus('off')
+      }
+    })().catch((error: unknown) => {
+      if (active) {
+        setPushError(errorText(error))
+        setPushStatus('error')
+      }
+    })
+
+    return () => { active = false }
+  }, [client, member, session])
 
   const loadRoster = useCallback(async (accessToken: string) => {
     const response = await fetch('/api/admin-members', {
@@ -231,6 +314,60 @@ function Messages() {
       if (error) setAuthError(error.message)
     } catch (error) {
       setAuthError(errorText(error))
+    }
+  }
+
+  async function enablePushNotifications() {
+    if (!client || !session || !member) return
+    setPushError('')
+
+    if (isIosDevice() && !isInstalledApp()) {
+      setPushError('On iPhone or iPad, add this site to your Home Screen and open the installed app first. Web push requires iOS 16.4 or newer.')
+      return
+    }
+
+    const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY?.trim()
+    if (!publicKey) {
+      setPushError('Push notifications are not configured on this site yet.')
+      return
+    }
+
+    setPushStatus('checking')
+    try {
+      const permission = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission()
+      if (permission !== 'granted') {
+        setPushStatus(permission === 'denied' ? 'denied' : 'off')
+        return
+      }
+
+      const registration = await navigator.serviceWorker.register('/sw.js')
+      const existingSubscription = await registration.pushManager.getSubscription()
+      const subscription = existingSubscription ?? await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: decodeVapidPublicKey(publicKey),
+      })
+      await savePushSubscription(client, session.user.id, subscription)
+      setPushStatus('on')
+    } catch (error) {
+      setPushError(errorText(error))
+      setPushStatus('error')
+    }
+  }
+
+  async function disablePushNotifications() {
+    if (!client || !session) return
+    setPushStatus('checking')
+    setPushError('')
+    try {
+      const registration = await navigator.serviceWorker.getRegistration('/')
+      const subscription = await registration?.pushManager.getSubscription()
+      if (subscription) await removePushSubscription(client, session.user.id, subscription)
+      setPushStatus('off')
+    } catch (error) {
+      setPushError(errorText(error))
+      setPushStatus('error')
     }
   }
 
@@ -393,6 +530,22 @@ function Messages() {
             <button className="messages-secondary-button" type="button" onClick={() => void signOut()}><LogOut size={15} />Sign out</button>
           </div>
           <p className="messages-safety-note">Parents and coaches only. Keep messages team-related; don’t share sensitive information. Not monitored for emergencies.</p>
+          <div className="messages-push-controls">
+            {isIosDevice() && !isInstalledApp() && <p>On iPhone or iPad, add this site to your Home Screen and open it there to enable push notifications (iOS 16.4+).</p>}
+            <button
+              className="messages-secondary-button"
+              type="button"
+              onClick={() => void (pushStatus === 'on' ? disablePushNotifications() : enablePushNotifications())}
+              disabled={pushStatus === 'checking' || pushStatus === 'denied' || pushStatus === 'unsupported' || (isIosDevice() && !isInstalledApp())}
+            >
+              {pushStatus === 'checking' ? 'Checking notifications…' :
+                pushStatus === 'on' ? 'Turn off notifications' :
+                  pushStatus === 'denied' ? 'Notifications blocked in browser settings' :
+                    pushStatus === 'unsupported' ? 'Push notifications unsupported' : 'Enable notifications'}
+            </button>
+            {pushStatus === 'unsupported' && <p>Use a supported browser on HTTPS. iPhone and iPad require iOS 16.4+ and the Home Screen app.</p>}
+            {pushError && <p className="messages-inline-error" role="alert">{pushError}</p>}
+          </div>
           {realtimeError && <p className="messages-inline-error" role="status">{realtimeError}</p>}
           {messagesError && <p className="messages-inline-error" role="alert">{messagesError}</p>}
           <div className="messages-list" ref={messageListRef} role="log" aria-label="Team messages" aria-live="polite">

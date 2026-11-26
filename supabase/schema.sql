@@ -66,6 +66,15 @@ create table public.beta_messages (
 
 create index beta_messages_created_at_idx on public.beta_messages (created_at);
 
+create table public.beta_push_subscriptions (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  endpoint text not null,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now(),
+  primary key (user_id, endpoint)
+);
+
 create or replace function public.is_beta_member()
 returns boolean
 language sql
@@ -101,6 +110,7 @@ grant execute on function public.is_beta_coach() to authenticated;
 
 alter table public.beta_members enable row level security;
 alter table public.beta_messages enable row level security;
+alter table public.beta_push_subscriptions enable row level security;
 
 create policy "Approved members can view member names"
   on public.beta_members for select to authenticated
@@ -118,9 +128,28 @@ create policy "Coaches can remove messages"
   on public.beta_messages for delete to authenticated
   using (public.is_beta_coach());
 
+create policy "Members can view their push subscriptions"
+  on public.beta_push_subscriptions for select to authenticated
+  using (user_id = auth.uid() and public.is_beta_member());
+
+create policy "Members can add their push subscriptions"
+  on public.beta_push_subscriptions for insert to authenticated
+  with check (user_id = auth.uid() and public.is_beta_member());
+
+create policy "Members can update their push subscriptions"
+  on public.beta_push_subscriptions for update to authenticated
+  using (user_id = auth.uid() and public.is_beta_member())
+  with check (user_id = auth.uid() and public.is_beta_member());
+
+create policy "Members can remove their push subscriptions"
+  on public.beta_push_subscriptions for delete to authenticated
+  using (user_id = auth.uid() and public.is_beta_member());
+
 revoke all on public.beta_members, public.beta_messages from anon, authenticated;
+revoke all on public.beta_push_subscriptions from anon, authenticated;
 grant select (user_id, display_name, role, active, created_at) on public.beta_members to authenticated;
 grant select, insert, delete on public.beta_messages to authenticated;
+grant select, insert, update, delete on public.beta_push_subscriptions to authenticated;
 grant usage, select on sequence public.beta_messages_id_seq to authenticated;
 
 do $$

@@ -480,6 +480,16 @@ a.next-location:hover { color: var(--maroon); text-decoration: underline; }
   font-size: 9px;
   line-height: 1.5;
 }
+.messages-push-controls {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.messages-push-controls p { color: #6d7a7e; font-size: 10px; line-height: 1.5; }
+.messages-push-controls .messages-inline-error { flex-basis: 100%; }
 .messages-list {
   min-height: 300px;
   max-height: 58vh;
@@ -658,6 +668,7 @@ a.next-location:hover { color: var(--maroon); text-decoration: underline; }
   .messages-admin-member { align-items: flex-start; flex-wrap: wrap; }
   .messages-admin-member > div { width: 100%; }
   .messages-safety-note { padding: 9px 12px; }
+  .messages-push-controls { padding: 10px 12px; }
   .messages-list { min-height: 260px; padding: 12px; }
   .message-item { max-width: 92%; }
   .messages-compose { padding: 10px 12px 0; }

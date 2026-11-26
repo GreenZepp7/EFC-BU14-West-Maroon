@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import { POST as handleChat } from './api/chat.ts'
 import { GET as handleMcpGet, POST as handleMcpPost } from './api/mcp.ts'
 import { GET as handleAdminMembersGet, POST as handleAdminMembersPost } from './api/admin-members.ts'
+import { POST as handleMessagePush } from './api/message-push.ts'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
 const distDirectory = resolve(root, 'dist')
@@ -20,6 +21,7 @@ const mimeTypes = {
   '.ico': 'image/x-icon',
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2',
@@ -60,7 +62,9 @@ async function serveStatic(pathname, response) {
 
   response.writeHead(200, {
     'content-type': mimeTypes[extname(filePath)] || 'application/octet-stream',
-    'cache-control': extname(filePath) === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
+    'cache-control': extname(filePath) === '.html' || relativePath === 'sw.js' || relativePath === 'manifest.webmanifest'
+      ? 'no-cache'
+      : 'public, max-age=31536000, immutable',
   })
   if (response.req.method === 'HEAD') response.end()
   else createReadStream(filePath).pipe(response)
@@ -98,6 +102,7 @@ const server = createServer(async (request, response) => {
     '/api/chat': { POST: handleChat },
     '/api/mcp': { GET: handleMcpGet, POST: handleMcpPost },
     '/api/admin-members': { GET: handleAdminMembersGet, POST: handleAdminMembersPost },
+    '/api/message-push': { POST: handleMessagePush },
   }
   const apiHandler = apiHandlers[requestUrl.pathname]?.[request.method]
   if (apiHandler) {
